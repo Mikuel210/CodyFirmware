@@ -11,11 +11,7 @@
 #include "PID.h"
 
 // Navigation parameters
-#define MIN_PWM 13
-#define TOOLHEAD_STOP_DISTANCE 1
-#define ERROR_DECELERATION 0.02
-#define STEERING_MAX_DISTANCE 20.0
-#define STEERING_MIN_DISTANCE 5.0
+#define ERROR_DECELERATION 0.0025
 
 class Navigation {
   public:

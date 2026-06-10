@@ -9,7 +9,8 @@ class Program {
 
   private:
     static void cemento() {
-      Cody::addPathPoint(0, 500);
+      Cody::addPathPoint(0, 350);
+      Cody::addPathPoint(-150, 500);
       Cody::addPathPoint(-500, 500);
       Cody::followPathAsync(40)->await();
     }
