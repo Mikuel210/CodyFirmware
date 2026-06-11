@@ -8,7 +8,7 @@
 
 // BMS parameters
 #define BMS_HZ 1
-#define VOLTAGE_THRESHOLD 3.4
+#define VOLTAGE_THRESHOLD 3.5
 #define BMS_FREQUENCY 440
 
 class BMS {

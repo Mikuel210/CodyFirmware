@@ -11,7 +11,7 @@
 #define X_AXIS_MM_PER_REVOLUTION 43.9822971503
 #define Z_AXIS_MM_PER_REVOLUTION 56.5486677646
 #define WHEELS_MM_PER_REVOLUTION 38.2790981791
-#define TICKS_PER_REVOLUTION 512.0
+#define TICKS_PER_REVOLUTION 600.0
 #define DISTANCE_BETWEEN_WHEELS_MM 228.0
 
 class Fusion {
@@ -76,12 +76,12 @@ class Fusion {
       previousFusionData.toolheadPosition = Vector3();
     }
 
+    static FusionData previousFusionData; //todo private
   private:
     static float deltat;
     static SF fusion;
 
     static SensorData previousSensorData;
-    static FusionData previousFusionData;
     static ColorData colorValues[5];
 
     static Color rgbToColor(ColorData colorData) {

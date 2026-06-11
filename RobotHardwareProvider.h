@@ -47,7 +47,6 @@ class RobotHardwareProvider : public IHardwareProvider {
     }
 
     void move(NavigationData navigationData) override {
-      navigationData.rightMotor.forwards = !navigationData.rightMotor.forwards;
       moveMotor(navigationData.leftMotor, L_IN_1, L_IN_2, L_PWM);
       moveMotor(navigationData.rightMotor, R_IN_1, R_IN_2, R_PWM);
     }

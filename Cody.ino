@@ -22,17 +22,22 @@
 // Setup
 void setup() {
   Serial.begin(BAUD_RATE);
-  delay(3000);
+  delay(500);
   
   dataProvider.initialize();
   hardwareProvider.initialize();
   Cody::initialize(dataProvider, hardwareProvider);
   BMS::initialize();
 
+/*
   while (true) {
     waitForButton();
     Program::go();
   }
+*/
+
+  waitForButton();
+  Cody::homeAsync();
 }
 
 void waitForButton() {

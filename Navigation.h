@@ -9,9 +9,10 @@
 #include "MillData.h"
 #include "FusionData.h"
 #include "PID.h"
+#include "Plotter.h"//todo
 
 // Navigation parameters
-#define ERROR_DECELERATION 0.0025
+#define ERROR_DECELERATION 1//0.0025
 
 class Navigation {
   public:
@@ -24,7 +25,7 @@ class Navigation {
       NavigationData navigationData;
 
       // Get orientation correction
-      float targetOrientation = atan2(drive.steeringTarget.x - fusionData.position.x, drive.steeringTarget.y - fusionData.position.y) * (180.0 / M_PI);
+      float targetOrientation = 90;//atan2(drive.steeringTarget.x - fusionData.position.x, drive.steeringTarget.y - fusionData.position.y) * (180.0 / M_PI);
       float error = targetOrientation - fusionData.orientation;
 
       while (error > 180.0) { error -= 360.0; targetOrientation -= 360.0; }
@@ -38,8 +39,17 @@ class Navigation {
       double distancePwm = 255.0 / 2.0 * distanceAuthority;
 
       // Construct navigation data
-      navigationData.leftMotor = getMotorData(distancePwm + orientationCorrection, speed);
-      navigationData.rightMotor = getMotorData(distancePwm - orientationCorrection, speed);
+      navigationData.leftMotor = getMotorData(-orientationCorrection, speed);
+      navigationData.rightMotor = getMotorData(+orientationCorrection, speed);
+
+      Plotter::plot("error", error);
+      Plotter::plot("theta", fusionData.orientation);
+      Plotter::plot("correction", orientationCorrection);
+      Plotter::plot("lp", navigationData.leftMotor.pwm);
+      Plotter::plot("lf", navigationData.leftMotor.forwards);
+      Plotter::plot("rp", navigationData.rightMotor.pwm);
+      Plotter::plot("rf", navigationData.rightMotor.forwards);
+      Plotter::endPlot();
 
       return navigationData;
     }

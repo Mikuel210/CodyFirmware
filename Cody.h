@@ -38,13 +38,15 @@ class Cody {
     }
 
     // Drive
-    static Task* moveAsync(double x, double y, double speed = 100, double decelerationDistance = MOVEMENT_LOOKAHEAD) {
-      Task* task = new Task("move", moveTask);
-      TargetArgs* args = new TargetArgs();
-      Navigation::drive.decelerationDistance = decelerationDistance;
+    static Task* moveAsync(double x, double y, double speed = 50, double lookaheadDistance = MOVEMENT_LOOKAHEAD) {
+      addPathPoint(x, y);
+      
+      Task* task = new Task("move", followPathTask);
+      FollowPathArgs* args = new FollowPathArgs();
+      pathData.lookaheadDistance = lookaheadDistance;
 
       args->task = task;
-      args->target = new Vector3(x, y);
+      args->data = &pathData;
       args->speed = speed / 100.0;
       args->positionMember = &FusionData::position;
       args->navigationTarget = &Navigation::drive;
@@ -60,7 +62,7 @@ class Cody {
       pathData.points.push_back(point);
     }
 
-    static Task* followPathAsync(double speed = 100, double lookaheadDistance = MOVEMENT_LOOKAHEAD) {
+    static Task* followPathAsync(double speed = 50, double lookaheadDistance = MOVEMENT_LOOKAHEAD) {
       Task* task = new Task("followPath", followPathTask);
       FollowPathArgs* args = new FollowPathArgs();
       pathData.lookaheadDistance = lookaheadDistance;
@@ -78,13 +80,15 @@ class Cody {
     }
 
     // Toolhead
-    static Task* moveToolheadAsync(double x, double z, double speed = 100, double decelerationDistance = TOOLHEAD_LOOKAHEAD) {
-      Task* task = new Task("moveToolhead", moveTask);
-      TargetArgs* args = new TargetArgs();
-      Navigation::toolhead.decelerationDistance = decelerationDistance;
+    static Task* moveToolheadAsync(double x, double z, double speed = 100, double lookaheadDistance = TOOLHEAD_LOOKAHEAD) {
+      addToolheadPathPoint(x, z);
+
+      Task* task = new Task("moveToolhead", followPathTask);
+      FollowPathArgs* args = new FollowPathArgs();
+      toolheadPathData.lookaheadDistance = lookaheadDistance;
 
       args->task = task;
-      args->target = new Vector3(x, 0, z);
+      args->data = &toolheadPathData;
       args->speed = speed / 100.0;
       args->positionMember = &FusionData::toolheadPosition;
       args->navigationTarget = &Navigation::toolhead;
@@ -103,7 +107,7 @@ class Cody {
     static Task* followToolheadPathAsync(double speed = 100, double lookaheadDistance = TOOLHEAD_LOOKAHEAD) {
       FollowPathArgs* args = new FollowPathArgs();
       Task* task = new Task("followToolheadPath", followPathTask);
-      pathData.lookaheadDistance = lookaheadDistance;
+      toolheadPathData.lookaheadDistance = lookaheadDistance;
 
       args->task = task;
       args->data = &toolheadPathData;
@@ -117,7 +121,7 @@ class Cody {
       return task;
     }
 
-    static Task* homeAsync(double speed = 10) {
+    static Task* homeAsync(double speed = 100) {
       HomeArgs* args = new HomeArgs();
       Task* task = new Task("homeTask", homeTask);
 
@@ -129,13 +133,15 @@ class Cody {
     }
 
     // Wheels
-    static Task* moveWheelsAsync(double z, double speed = 100, double decelerationDistance = WHEELS_LOOKAHEAD) {
-      Task* task = new Task("moveWheels", moveTask);
-      TargetArgs* args = new TargetArgs();
-      Navigation::wheels.decelerationDistance = decelerationDistance;
+    static Task* moveWheelsAsync(double z, double speed = 100, double lookaheadDistance = WHEELS_LOOKAHEAD) {
+      addWheelsPathPoint(z);
+
+      Task* task = new Task("moveWheels", followPathTask);
+      FollowPathArgs* args = new FollowPathArgs();
+      wheelsPathData.lookaheadDistance = lookaheadDistance;
 
       args->task = task;
-      args->target = new Vector3(0, 0, z);
+      args->data = &wheelsPathData;
       args->speed = speed / 100.0;
       args->positionMember = &FusionData::wheelsPosition;
       args->navigationTarget = &Navigation::wheels;
@@ -154,7 +160,7 @@ class Cody {
     static Task* followWheelsPathAsync(double speed = 100, double lookaheadDistance = WHEELS_LOOKAHEAD) {
       FollowPathArgs* args = new FollowPathArgs();
       Task* task = new Task("followWheelsPath", followPathTask);
-      pathData.lookaheadDistance = lookaheadDistance;
+      wheelsPathData.lookaheadDistance = lookaheadDistance;
 
       args->task = task;
       args->data = &wheelsPathData;
@@ -169,13 +175,15 @@ class Cody {
     }
 
     // Mill
-    static Task* moveMillAsync(double z, double speed = 100, double decelerationDistance = MILL_LOOKAHEAD) {
-      Task* task = new Task("moveMill", moveTask);
-      TargetArgs* args = new TargetArgs();
-      Navigation::mill.decelerationDistance = decelerationDistance;
+    static Task* moveMillAsync(double z, double speed = 100, double lookaheadDistance = MILL_LOOKAHEAD) {
+      addMillPathPoint(z);
+
+      Task* task = new Task("moveMill", followPathTask);
+      FollowPathArgs* args = new FollowPathArgs();
+      millPathData.lookaheadDistance = lookaheadDistance;
 
       args->task = task;
-      args->target = new Vector3(z);
+      args->data = &millPathData;
       args->speed = speed / 100.0;
       args->positionMember = &FusionData::millPosition;
       args->navigationTarget = &Navigation::mill;
@@ -194,7 +202,7 @@ class Cody {
     static Task* followMillPathAsync(double speed = 100, double lookaheadDistance = MILL_LOOKAHEAD) {
       FollowPathArgs* args = new FollowPathArgs();
       Task* task = new Task("followMillPath", followPathTask);
-      pathData.lookaheadDistance = lookaheadDistance;
+      millPathData.lookaheadDistance = lookaheadDistance;
 
       args->task = task;
       args->data = &millPathData;
@@ -213,6 +221,18 @@ class Cody {
       hardwareProvider->writeLed(value);
     }
 
+    // Rotation
+    static Task* rotateToAsync(double heading, double speed = 50) {
+      Task* task = new Task("rotate", rotateTask);
+      RotateArgs* args = new RotateArgs();
+
+      args->task = task;
+      args->heading = heading;
+      args->speed = speed / 100.0;
+
+      task->start(args);
+      return task;
+    }
 
   private:
     static PursuitData pathData;
@@ -220,54 +240,9 @@ class Cody {
     static PursuitData wheelsPathData;
     static PursuitData millPathData;
 
-    // Move
     using PositionMember = Vector3 (FusionData::*);
     using MoveFunction = void (*)(FusionData, double);
     using StopFunction = void (*)();
-
-    struct TargetArgs : TaskArgs {
-      Vector3* target;
-      double speed;
-
-      PositionMember positionMember;
-      NavigationTarget* navigationTarget;
-      MoveFunction moveFunction;
-      StopFunction stopFunction;
-    };
-
-    static void moveTask(void* task) {
-      TargetArgs* args = (TargetArgs*)task;
-      Vector3* target = args->target;
-      args->navigationTarget->target = *target;
-
-      // Get movement line
-      SensorData sensorData = dataProvider->getData();
-      FusionData fusionData = Fusion::getData(sensorData);
-      Line line(fusionData.position, *target);
-
-      // Acceleration
-      double speed = 0;
-      unsigned long msStart = millis();
-
-      while (true) {
-        unsigned long msLoop = millis();
-
-        SensorData sensorData = dataProvider->getData();
-        FusionData fusionData = Fusion::getData(sensorData);
-        Vector3 position = fusionData.*(args->positionMember);
-
-        if (Pursuit::getClosestTime(line, position) >= 1) break;
-
-        speed = std::min((msLoop - msStart) / ACCELERATION_MS * args->speed, args->speed);
-        args->moveFunction(fusionData, speed);
-
-        vTaskDelay(max(1000.0 / HZ - (millis() - msLoop), 0.0));
-      }
-
-      args->stopFunction();
-      args->task->stop();
-      delete args;
-    }
 
     // Follow path
     struct FollowPathArgs : TaskArgs {
@@ -310,7 +285,8 @@ class Cody {
 
         args->navigationTarget->target = lookaheadPoint;
         args->navigationTarget->steeringTarget = overflowLookahead;
-
+/*
+        // Debug
         Plotter::setLimits(0.0, 1000.0);
         Plotter::plot("lx", lookaheadPoint.x);
         Plotter::plot("ly", lookaheadPoint.y);
@@ -319,7 +295,7 @@ class Cody {
         Plotter::plot("θ", fusionData.orientation);
         Plotter::plot("v", fusionData.voltage);
         Plotter::endPlot();
-
+*/
         bool inLastSegment = data->lineIndex == data->points.size() - 2;
         double time = Pursuit::getClosestTime(lastSegment, fusionData.position);
         if (inLastSegment && time >= 1) break;
@@ -360,8 +336,8 @@ class Cody {
         xLimit = xLimit || sensorData.xLimit;
         zLimit = zLimit || sensorData.zLimit;
 
-        MotorData xAxis(false, xLimit ? 0 : pwm);
-        MotorData zAxis(false, zLimit ? 0 : pwm);
+        MotorData xAxis(true, xLimit ? 0 : pwm);
+        MotorData zAxis(true, zLimit ? 0 : pwm);
         ToolheadData toolheadData { xAxis, zAxis };
 
         hardwareProvider->moveToolhead(toolheadData);
@@ -372,6 +348,28 @@ class Cody {
 
       Fusion::homingComplete();
 
+      args->task->stop();
+      delete args;
+    }
+
+    // Rotate
+    struct RotateArgs : TaskArgs {
+      double heading;
+      double speed;
+    };
+
+    static void rotateTask(void* task) {
+      RotateArgs* args = (RotateArgs*)task;
+
+      while (true) {
+        unsigned long msStart = millis();
+
+        // todo
+
+        vTaskDelay(max(1000.0 / HZ - (millis() - msStart), 0.0));
+      }
+
+      hardwareProvider->move({{true, 0}, {true, 0}});
       args->task->stop();
       delete args;
     }
