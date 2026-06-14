@@ -29,15 +29,8 @@ void setup() {
   Cody::initialize(dataProvider, hardwareProvider);
   BMS::initialize();
 
-/*
-  while (true) {
-    waitForButton();
-    Program::go();
-  }
-*/
-
   waitForButton();
-  Cody::homeAsync();
+  Program::go();
 }
 
 void waitForButton() {
@@ -48,7 +41,5 @@ void waitForButton() {
     delay(10);
   }
 }
-
-int previousPulses;
 
 void loop() {}

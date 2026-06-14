@@ -3,6 +3,5 @@
 
 struct NavigationTarget {
   Vector3 target;
-  Vector3 steeringTarget;
   double decelerationDistance;
 };

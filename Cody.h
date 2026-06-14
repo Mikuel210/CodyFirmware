@@ -23,9 +23,9 @@
 #define DECELERATION_MM 250.0
 #define MIN_SPEED 10.0
 #define MOVEMENT_LOOKAHEAD 100.0
-#define TOOLHEAD_LOOKAHEAD 50
-#define WHEELS_LOOKAHEAD 10
-#define MILL_LOOKAHEAD 25
+#define TOOLHEAD_LOOKAHEAD 10.0
+#define WHEELS_LOOKAHEAD 10.0
+#define MILL_LOOKAHEAD 25.0
 
 class Cody {
   public:
@@ -280,30 +280,32 @@ class Cody {
         FusionData fusionData = Fusion::getData(sensorData);
         Vector3 position = fusionData.*(args->positionMember);
 
-        Vector3 lookaheadPoint = Pursuit::findLookahead(position, data);
-        Vector3 overflowLookahead = Pursuit::findLookahead(position, data, true);
-
+        Vector3 lookaheadPoint = {0, 0, 50};//Pursuit::findLookahead(position, data, true);
         args->navigationTarget->target = lookaheadPoint;
-        args->navigationTarget->steeringTarget = overflowLookahead;
-/*
+
         // Debug
         Plotter::setLimits(0.0, 1000.0);
         Plotter::plot("lx", lookaheadPoint.x);
         Plotter::plot("ly", lookaheadPoint.y);
+        Plotter::plot("lz", lookaheadPoint.z);
         Plotter::plot("x", position.x);
         Plotter::plot("y", position.y);
+        Plotter::plot("z", position.z);
         Plotter::plot("θ", fusionData.orientation);
         Plotter::plot("v", fusionData.voltage);
         Plotter::endPlot();
-*/
+
+        // End condition
         bool inLastSegment = data->lineIndex == data->points.size() - 2;
         double time = Pursuit::getClosestTime(lastSegment, fusionData.position);
         if (inLastSegment && time >= 1) break;
 
-        double distance = Navigation::getDistance(position, lastSegment.end);
-        double acceleration = Navigation::dmap((msLoop - msStart) / ACCELERATION_MS, 0.0, 1.0, MIN_SPEED / 100.0, args->speed);
-        double deceleration = Navigation::dmap(distance, DECELERATION_MM, 0.0, args->speed, MIN_SPEED / 100.0);
-        double speed = std::min((inLastSegment && distance <= DECELERATION_MM) ? deceleration : acceleration, args->speed);
+        // Acceleration and deceleration
+        //double distance = Navigation::getDistance(position, lastSegment.end);
+        //double acceleration = Navigation::dmap((msLoop - msStart) / ACCELERATION_MS, 0.0, 1.0, MIN_SPEED / 100.0, args->speed);
+        //double deceleration = Navigation::dmap(distance, DECELERATION_MM, 0.0, args->speed, MIN_SPEED / 100.0);
+        //double speed = std::min((inLastSegment && distance <= DECELERATION_MM) ? deceleration : acceleration, args->speed);
+        double speed = 1;
         args->moveFunction(fusionData, speed);
 
         vTaskDelay(max(1000.0 / HZ - (millis() - msLoop), 0.0));
@@ -336,8 +338,8 @@ class Cody {
         xLimit = xLimit || sensorData.xLimit;
         zLimit = zLimit || sensorData.zLimit;
 
-        MotorData xAxis(true, xLimit ? 0 : pwm);
-        MotorData zAxis(true, zLimit ? 0 : pwm);
+        MotorData xAxis(false, xLimit ? 0 : pwm);
+        MotorData zAxis(false, zLimit ? 0 : pwm);
         ToolheadData toolheadData { xAxis, zAxis };
 
         hardwareProvider->moveToolhead(toolheadData);

@@ -41,7 +41,7 @@ IDataProvider::getData() → SensorData
 
 - **SensorData** — Raw sensor readings (encoder pulses, IMU, BMS, limit switches, color)
 - **FusionData** — Fused state (orientation, 4x positions, voltage, detected color)
-- **NavigationTarget** — Shared mutable target (position, steering target, deceleration distance) updated each cycle by the pure pursuit loop
+- **NavigationTarget** — Shared mutable target (target, deceleration distance) updated each cycle by the pure pursuit loop
 - **PursuitData** — Path waypoints + lookahead distance + current line index
 - **NavigationData / ToolheadData / WheelsData / MillData** — Motor command structs (MotorData: forwards bool + pwm int)
 

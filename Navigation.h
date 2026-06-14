@@ -12,7 +12,7 @@
 #include "Plotter.h"//todo
 
 // Navigation parameters
-#define ERROR_DECELERATION 1//0.0025
+#define ERROR_DECELERATION 0.0025
 
 class Navigation {
   public:
@@ -25,31 +25,20 @@ class Navigation {
       NavigationData navigationData;
 
       // Get orientation correction
-      float targetOrientation = 90;//atan2(drive.steeringTarget.x - fusionData.position.x, drive.steeringTarget.y - fusionData.position.y) * (180.0 / M_PI);
+      float targetOrientation = atan2(drive.target.x - fusionData.position.x, drive.target.y - fusionData.position.y) * (180.0 / M_PI);
       float error = targetOrientation - fusionData.orientation;
 
       while (error > 180.0) { error -= 360.0; targetOrientation -= 360.0; }
       while (error < -180.0) { error += 360.0; targetOrientation += 360.0; }
 
       // Get distance correction
-      double distance = getDistance(fusionData.position, drive.target);
       double orientationCorrection = -orientationPid.getCorrection(error);
-
       double distanceAuthority = std::clamp(1.0 - std::abs(orientationCorrection) * ERROR_DECELERATION, 0.0, 1.0);
       double distancePwm = 255.0 / 2.0 * distanceAuthority;
 
       // Construct navigation data
-      navigationData.leftMotor = getMotorData(-orientationCorrection, speed);
-      navigationData.rightMotor = getMotorData(+orientationCorrection, speed);
-
-      Plotter::plot("error", error);
-      Plotter::plot("theta", fusionData.orientation);
-      Plotter::plot("correction", orientationCorrection);
-      Plotter::plot("lp", navigationData.leftMotor.pwm);
-      Plotter::plot("lf", navigationData.leftMotor.forwards);
-      Plotter::plot("rp", navigationData.rightMotor.pwm);
-      Plotter::plot("rf", navigationData.rightMotor.forwards);
-      Plotter::endPlot();
+      navigationData.leftMotor = getMotorData(distancePwm + orientationCorrection, speed);
+      navigationData.rightMotor = getMotorData(distancePwm - orientationCorrection, speed);
 
       return navigationData;
     }

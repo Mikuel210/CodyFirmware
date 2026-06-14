@@ -47,11 +47,12 @@ class RobotHardwareProvider : public IHardwareProvider {
     }
 
     void move(NavigationData navigationData) override {
-      moveMotor(navigationData.leftMotor, L_IN_1, L_IN_2, L_PWM);
-      moveMotor(navigationData.rightMotor, R_IN_1, R_IN_2, R_PWM);
+      moveMotor(navigationData.rightMotor, L_IN_1, L_IN_2, L_PWM);
+      moveMotor(navigationData.leftMotor, R_IN_1, R_IN_2, R_PWM);
     }
 
     void moveToolhead(ToolheadData toolheadData) override {
+      toolheadData.zAxisMotor.forwards = !toolheadData.zAxisMotor.forwards;
       moveMotor(toolheadData.xAxisMotor, A1_IN_1, A1_IN_2, A1_PWM);
       moveMotor(toolheadData.zAxisMotor, A2_IN_1, A2_IN_2, A2_PWM);
     }
