@@ -12,6 +12,7 @@
 #define Z_AXIS_MM_PER_REVOLUTION 56.5486677646
 #define WHEELS_MM_PER_REVOLUTION 38.2790981791
 #define TICKS_PER_REVOLUTION 600.0
+#define N20_TICKS_PER_REVOLUTION 5000.0
 #define DISTANCE_BETWEEN_WHEELS_MM 228.0
 
 class Fusion {
@@ -19,15 +20,6 @@ class Fusion {
     static FusionData getData(SensorData sensorData) {
       // Get orientation
       FusionData fusionData;
-      deltat = fusion.deltatUpdate();
-
-      fusion.MahonyUpdate(
-        sensorData.gyroscope.x, sensorData.gyroscope.y, sensorData.gyroscope.z,
-        sensorData.acceleration.x, sensorData.acceleration.y, sensorData.acceleration.z,
-        sensorData.magnetometer.x, sensorData.magnetometer.y, sensorData.magnetometer.z, deltat
-      );
-
-      float imuOrientation = fusion.getRoll();
 
       // Get position
       double leftDistanceMm = (sensorData.leftPulses - previousSensorData.leftPulses) * TRAVEL_PER_REVOLUTION_MM / TICKS_PER_REVOLUTION;
@@ -42,14 +34,14 @@ class Fusion {
       double deltaY = deltaDistanceMm * cos(averageOrientation * DEG_TO_RAD);
 
       // Get toolhead position
-      double toolheadDeltaX = (sensorData.xAxisPulses - previousSensorData.xAxisPulses) * X_AXIS_MM_PER_REVOLUTION / TICKS_PER_REVOLUTION;
-      double toolheadDeltaZ = (sensorData.zAxisPulses - previousSensorData.zAxisPulses) * Z_AXIS_MM_PER_REVOLUTION / TICKS_PER_REVOLUTION;
+      double toolheadDeltaX = (sensorData.xAxisPulses - previousSensorData.xAxisPulses) * X_AXIS_MM_PER_REVOLUTION / N20_TICKS_PER_REVOLUTION;
+      double toolheadDeltaZ = (sensorData.zAxisPulses - previousSensorData.zAxisPulses) * Z_AXIS_MM_PER_REVOLUTION / N20_TICKS_PER_REVOLUTION;
 
       // Get wheels position
-      double wheelsDelta = (sensorData.wheelsPulses - previousSensorData.wheelsPulses) * WHEELS_MM_PER_REVOLUTION / TICKS_PER_REVOLUTION;
+      double wheelsDelta = (sensorData.wheelsPulses - previousSensorData.wheelsPulses) * WHEELS_MM_PER_REVOLUTION / N20_TICKS_PER_REVOLUTION;
 
       // Get mill position
-      double millDelta = (sensorData.millPulses - previousSensorData.millPulses) / TICKS_PER_REVOLUTION * 360.0;
+      double millDelta = (sensorData.millPulses - previousSensorData.millPulses) / N20_TICKS_PER_REVOLUTION * 360.0;
 
       // Get voltage
       double averageVoltage = sensorData.bms3 * 2.0;
@@ -58,10 +50,10 @@ class Fusion {
       fusionData.color = rgbToColor(sensorData.colorData);
 
       // Construct fusion data
-      fusionData.orientation = orientation; // TODO: Fuse with IMU orientation
+      fusionData.orientation = orientation;
       fusionData.position = Vector3(previousFusionData.position.x + deltaX, previousFusionData.position.y + deltaY, 0);
-      fusionData.toolheadPosition = Vector3(previousFusionData.toolheadPosition.x + toolheadDeltaX, 0, previousFusionData.toolheadPosition.z + toolheadDeltaZ);
-      fusionData.wheelsPosition = Vector3(0, 0, previousFusionData.wheelsPosition.z + wheelsDelta);
+      fusionData.toolheadPosition = Vector3(previousFusionData.toolheadPosition.x + toolheadDeltaX, previousFusionData.toolheadPosition.y + toolheadDeltaZ);
+      fusionData.wheelsPosition = Vector3(previousFusionData.wheelsPosition.x + wheelsDelta);
       fusionData.millPosition = Vector3(previousFusionData.millPosition.x + millDelta);
       fusionData.voltage = averageVoltage;
 
@@ -76,11 +68,11 @@ class Fusion {
       previousFusionData.toolheadPosition = Vector3();
     }
 
-    static FusionData previousFusionData; //todo private
   private:
     static float deltat;
     static SF fusion;
 
+    static FusionData previousFusionData;
     static SensorData previousSensorData;
     static ColorData colorValues[5];
 

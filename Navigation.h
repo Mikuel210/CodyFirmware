@@ -9,10 +9,9 @@
 #include "MillData.h"
 #include "FusionData.h"
 #include "PID.h"
-#include "Plotter.h"//todo
 
 // Navigation parameters
-#define ERROR_DECELERATION 0.0025
+#define ERROR_DECELERATION 0.01
 
 class Navigation {
   public:
@@ -48,10 +47,10 @@ class Navigation {
 
       // Get toolhead correction
       xAxisPid.setSetpoint(toolhead.target.x);
-      zAxisPid.setSetpoint(toolhead.target.z);
+      zAxisPid.setSetpoint(toolhead.target.y);
 
       double xCorrection = xAxisPid.getCorrection(fusionData.toolheadPosition.x);
-      double zCorrection = zAxisPid.getCorrection(fusionData.toolheadPosition.z);
+      double zCorrection = zAxisPid.getCorrection(fusionData.toolheadPosition.y);
 
       double xAxisPwm = correctionToPwm(xCorrection, toolhead);
       double zAxisPwm = correctionToPwm(zCorrection, toolhead);
@@ -67,8 +66,8 @@ class Navigation {
       WheelsData wheelsData;
 
       // Get wheels correction
-      wheelsPid.setSetpoint(wheels.target.z);
-      double pwm = correctionToPwm(wheelsPid.getCorrection(fusionData.wheelsPosition.z), wheels);
+      wheelsPid.setSetpoint(wheels.target.x);
+      double pwm = correctionToPwm(wheelsPid.getCorrection(fusionData.wheelsPosition.x), wheels);
 
       // Construct wheels data
       wheelsData.wheelsMotor = getMotorData(pwm, speed);
@@ -80,7 +79,7 @@ class Navigation {
 
       // Get mill correction
       millPid.setSetpoint(mill.target.x);
-      double pwm = correctionToPwm(millPid.getCorrection(fusionData.millPosition.z), mill);
+      double pwm = correctionToPwm(millPid.getCorrection(fusionData.millPosition.x), mill);
 
       // Construct mill data
       millData.millMotor = getMotorData(pwm, speed);

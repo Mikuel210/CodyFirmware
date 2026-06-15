@@ -19,12 +19,30 @@
 
 // Task parameters
 #define HZ 50.0
-#define ACCELERATION_MS 500.0
-#define DECELERATION_MM 250.0
-#define MIN_SPEED 10.0
+
+// Movement
+#define MOVEMENT_ACCELERATION_MS 500.0
+#define MOVEMENT_DECELERATION_MM 250.0
+#define MOVEMENT_MIN_SPEED 10.0
 #define MOVEMENT_LOOKAHEAD 100.0
+#define TRANSITION_LOOKAHEAD 250.0
+
+// Toolhead
+#define TOOLHEAD_ACCELERATION_MS 100.0
+#define TOOLHEAD_DECELERATION_MM 25.0
+#define TOOLHEAD_MIN_SPEED 60.0
 #define TOOLHEAD_LOOKAHEAD 10.0
+
+// Wheels
+#define WHEELS_ACCELERATION_MS 100.0
+#define WHEELS_DECELERATION_MM 10.0
+#define WHEELS_MIN_SPEED 30.0
 #define WHEELS_LOOKAHEAD 10.0
+
+// Mill
+#define MILL_ACCELERATION_MS 100.0
+#define MILL_DECELERATION_MM 10.0
+#define MILL_MIN_SPEED 30.0
 #define MILL_LOOKAHEAD 25.0
 
 class Cody {
@@ -40,21 +58,7 @@ class Cody {
     // Drive
     static Task* moveAsync(double x, double y, double speed = 50, double lookaheadDistance = MOVEMENT_LOOKAHEAD) {
       addPathPoint(x, y);
-      
-      Task* task = new Task("move", followPathTask);
-      FollowPathArgs* args = new FollowPathArgs();
-      pathData.lookaheadDistance = lookaheadDistance;
-
-      args->task = task;
-      args->data = &pathData;
-      args->speed = speed / 100.0;
-      args->positionMember = &FusionData::position;
-      args->navigationTarget = &Navigation::drive;
-      args->moveFunction = &moveRobot;
-      args->stopFunction = &stopRobot;
-
-      task->start(args);
-      return task;
+      return followPathAsync(speed, lookaheadDistance);
     }
 
     static void addPathPoint(double x, double y) {
@@ -70,6 +74,10 @@ class Cody {
       args->task = task;
       args->data = &pathData;
       args->speed = speed / 100.0;
+      args->minSpeed = MOVEMENT_MIN_SPEED / 100.0;
+      args->accelerationMs = MOVEMENT_ACCELERATION_MS;
+      args->decelerationMm = MOVEMENT_DECELERATION_MM;
+      args->transitionLookahead = TRANSITION_LOOKAHEAD;
       args->positionMember = &FusionData::position;
       args->navigationTarget = &Navigation::drive;
       args->moveFunction = &moveRobot;
@@ -82,25 +90,11 @@ class Cody {
     // Toolhead
     static Task* moveToolheadAsync(double x, double z, double speed = 100, double lookaheadDistance = TOOLHEAD_LOOKAHEAD) {
       addToolheadPathPoint(x, z);
-
-      Task* task = new Task("moveToolhead", followPathTask);
-      FollowPathArgs* args = new FollowPathArgs();
-      toolheadPathData.lookaheadDistance = lookaheadDistance;
-
-      args->task = task;
-      args->data = &toolheadPathData;
-      args->speed = speed / 100.0;
-      args->positionMember = &FusionData::toolheadPosition;
-      args->navigationTarget = &Navigation::toolhead;
-      args->moveFunction = &moveToolhead;
-      args->stopFunction = &stopToolhead;
-
-      task->start(args);
-      return task;
+      return followToolheadPathAsync(speed, lookaheadDistance);
     }
 
     static void addToolheadPathPoint(double x, double z) {
-      Vector3 point = Vector3(x, 0, z);
+      Vector3 point = Vector3(x, z);
       toolheadPathData.points.push_back(point);
     }
 
@@ -112,6 +106,10 @@ class Cody {
       args->task = task;
       args->data = &toolheadPathData;
       args->speed = speed / 100.0;
+      args->minSpeed = TOOLHEAD_MIN_SPEED / 100.0;
+      args->accelerationMs = TOOLHEAD_ACCELERATION_MS;
+      args->decelerationMm = TOOLHEAD_DECELERATION_MM;
+      args->transitionLookahead = lookaheadDistance;
       args->positionMember = &FusionData::toolheadPosition;
       args->navigationTarget = &Navigation::toolhead;
       args->moveFunction = &moveToolhead;
@@ -135,25 +133,11 @@ class Cody {
     // Wheels
     static Task* moveWheelsAsync(double z, double speed = 100, double lookaheadDistance = WHEELS_LOOKAHEAD) {
       addWheelsPathPoint(z);
-
-      Task* task = new Task("moveWheels", followPathTask);
-      FollowPathArgs* args = new FollowPathArgs();
-      wheelsPathData.lookaheadDistance = lookaheadDistance;
-
-      args->task = task;
-      args->data = &wheelsPathData;
-      args->speed = speed / 100.0;
-      args->positionMember = &FusionData::wheelsPosition;
-      args->navigationTarget = &Navigation::wheels;
-      args->moveFunction = &moveWheels;
-      args->stopFunction = &stopWheels;
-
-      task->start(args);
-      return task;
+      return followWheelsPathAsync(speed, lookaheadDistance);
     }
 
     static void addWheelsPathPoint(double z) {
-      Vector3 point = Vector3(0, 0, z);
+      Vector3 point = Vector3(z);
       wheelsPathData.points.push_back(point);
     }
 
@@ -165,6 +149,10 @@ class Cody {
       args->task = task;
       args->data = &wheelsPathData;
       args->speed = speed / 100.0;
+      args->minSpeed = WHEELS_MIN_SPEED / 100.0;
+      args->accelerationMs = WHEELS_ACCELERATION_MS;
+      args->decelerationMm = WHEELS_DECELERATION_MM;
+      args->transitionLookahead = lookaheadDistance;
       args->positionMember = &FusionData::wheelsPosition;
       args->navigationTarget = &Navigation::wheels;
       args->moveFunction = &moveWheels;
@@ -177,21 +165,7 @@ class Cody {
     // Mill
     static Task* moveMillAsync(double z, double speed = 100, double lookaheadDistance = MILL_LOOKAHEAD) {
       addMillPathPoint(z);
-
-      Task* task = new Task("moveMill", followPathTask);
-      FollowPathArgs* args = new FollowPathArgs();
-      millPathData.lookaheadDistance = lookaheadDistance;
-
-      args->task = task;
-      args->data = &millPathData;
-      args->speed = speed / 100.0;
-      args->positionMember = &FusionData::millPosition;
-      args->navigationTarget = &Navigation::mill;
-      args->moveFunction = &moveMill;
-      args->stopFunction = &stopMill;
-
-      task->start(args);
-      return task;
+      return followMillPathAsync(speed, lookaheadDistance);
     }
 
     static void addMillPathPoint(double z) {
@@ -207,6 +181,10 @@ class Cody {
       args->task = task;
       args->data = &millPathData;
       args->speed = speed / 100.0;
+      args->minSpeed = MILL_MIN_SPEED / 100.0;
+      args->accelerationMs = MILL_ACCELERATION_MS;
+      args->decelerationMm = MILL_DECELERATION_MM;
+      args->transitionLookahead = lookaheadDistance;
       args->positionMember = &FusionData::millPosition;
       args->navigationTarget = &Navigation::mill;
       args->moveFunction = &moveMill;
@@ -247,7 +225,12 @@ class Cody {
     // Follow path
     struct FollowPathArgs : TaskArgs {
       PursuitData* data;
+
       double speed;
+      double minSpeed;
+      double accelerationMs;
+      double decelerationMm;
+      double transitionLookahead;
 
       PositionMember positionMember;
       NavigationTarget* navigationTarget;
@@ -258,18 +241,24 @@ class Cody {
     static void followPathTask(void* task) {
       FollowPathArgs* args = (FollowPathArgs*)task;
       PursuitData* data = args->data;
-
+      
       // Set first point
       SensorData sensorData = dataProvider->getData();
       FusionData fusionData = Fusion::getData(sensorData);
       args->navigationTarget->decelerationDistance = data->lookaheadDistance;
-
+      
       data->lineIndex = 0;
       data->points.insert(data->points.begin(), fusionData.*(args->positionMember));
-
+      
       // Get last segment
       int pointCount = data->points.size();
       Line lastSegment(data->points[pointCount - 2], data->points[pointCount - 1]);
+      
+      // Transition data
+      PursuitData* transitionData = new PursuitData(data->points, args->transitionLookahead, data->lineIndex);
+      Vector3 currentTransitionPoint;
+      double currentTransitionTime;
+      int currentTransitionLineIndex;
 
       unsigned long msStart = millis();
 
@@ -280,8 +269,25 @@ class Cody {
         FusionData fusionData = Fusion::getData(sensorData);
         Vector3 position = fusionData.*(args->positionMember);
 
-        Vector3 lookaheadPoint = {0, 0, 50};//Pursuit::findLookahead(position, data, true);
-        args->navigationTarget->target = lookaheadPoint;
+        // Find lookahead and transition points
+        Vector3 lookaheadPoint = Pursuit::findLookahead(position, data, true);
+        Line lookaheadLine = { data->points[data->lineIndex], data->points[data->lineIndex + 1] };
+        double lookaheadTime = Pursuit::findLookaheadTime(position, lookaheadLine, data->lookaheadDistance);
+
+        Vector3 transitionPoint = Pursuit::findLookahead(position, transitionData, true);
+        Line transitionLine = { data->points[transitionData->lineIndex], data->points[transitionData->lineIndex + 1] };
+        double transitionTime = Pursuit::findLookaheadTime(position, transitionLine, transitionData->lookaheadDistance);
+
+        if (transitionData->lineIndex > currentTransitionLineIndex) {
+          currentTransitionPoint = transitionPoint;
+          currentTransitionTime = transitionTime;
+          currentTransitionLineIndex = transitionData->lineIndex;
+        }
+
+        if (data->lineIndex == currentTransitionLineIndex && lookaheadTime > currentTransitionTime)
+          args->navigationTarget->target = lookaheadPoint;
+        else
+          args->navigationTarget->target = currentTransitionPoint;
 
         // Debug
         Plotter::setLimits(0.0, 1000.0);
@@ -301,11 +307,10 @@ class Cody {
         if (inLastSegment && time >= 1) break;
 
         // Acceleration and deceleration
-        //double distance = Navigation::getDistance(position, lastSegment.end);
-        //double acceleration = Navigation::dmap((msLoop - msStart) / ACCELERATION_MS, 0.0, 1.0, MIN_SPEED / 100.0, args->speed);
-        //double deceleration = Navigation::dmap(distance, DECELERATION_MM, 0.0, args->speed, MIN_SPEED / 100.0);
-        //double speed = std::min((inLastSegment && distance <= DECELERATION_MM) ? deceleration : acceleration, args->speed);
-        double speed = 1;
+        double distance = Navigation::getDistance(position, lastSegment.end);
+        double acceleration = Navigation::dmap((msLoop - msStart) / args->accelerationMs, 0.0, 1.0, args->minSpeed, args->speed);
+        double deceleration = Navigation::dmap(distance, args->decelerationMm, 0.0, args->speed, args->minSpeed);
+        double speed = std::min((inLastSegment && distance <= args->decelerationMm) ? deceleration : acceleration, args->speed);
         args->moveFunction(fusionData, speed);
 
         vTaskDelay(max(1000.0 / HZ - (millis() - msLoop), 0.0));
@@ -314,6 +319,8 @@ class Cody {
       args->stopFunction();
       data->points.clear();
       args->task->stop();
+
+      delete transitionData;
       delete args;
     }
 
@@ -349,7 +356,6 @@ class Cody {
       }
 
       Fusion::homingComplete();
-
       args->task->stop();
       delete args;
     }
@@ -366,12 +372,12 @@ class Cody {
       while (true) {
         unsigned long msStart = millis();
 
-        // todo
+        // TODO
 
         vTaskDelay(max(1000.0 / HZ - (millis() - msStart), 0.0));
       }
 
-      hardwareProvider->move({{true, 0}, {true, 0}});
+      stopRobot();
       args->task->stop();
       delete args;
     }
