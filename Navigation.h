@@ -9,6 +9,7 @@
 #include "MillData.h"
 #include "FusionData.h"
 #include "PID.h"
+#include "Plotter.h"//todo
 
 // Navigation parameters
 #define ERROR_DECELERATION 0.01

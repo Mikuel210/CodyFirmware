@@ -1,7 +1,7 @@
 #pragma once
 #include "IDataProvider.h"
 #include "GPIO.h"
-#include "TCS34725.h"
+#include "Adafruit_TCS34725.h"
 #include <Arduino.h>
 #include <Wire.h>
 #include <ESP32Encoder.h>
@@ -35,7 +35,7 @@
 
 // Sensors
 ADS1115_WE ADS = ADS1115_WE(ADS_ADDRESS);
-TCS34725 TCS;
+Adafruit_TCS34725 TCS = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_600MS, TCS34725_GAIN_1X);
 
 class SensorDataProvider : public IDataProvider {
   public:
@@ -57,15 +57,13 @@ class SensorDataProvider : public IDataProvider {
 
       while (!ADS.init()) {
         Serial.println("Initializing ADS");
-        delay(1);
+        delay(10);
       }
 
       ADS.setVoltageRange_mV(ADS1115_RANGE_6144);
 
       // Initialize TCS34725
-      TCS.attach(Wire);
-      TCS.integrationTime(1000.0 / HZ);
-      TCS.gain(TCS34725::Gain::X01);
+      if (!TCS.begin()) Serial.println("Error initializing TCS34725");
 
       // Initialize PCF8575
       GPIO::initialize();
@@ -105,10 +103,10 @@ class SensorDataProvider : public IDataProvider {
       data.millPulses = millEncoder.getCount();
 
       // Get color sensor
-      if (TCS.available()) {
-        TCS34725::Color color = TCS.color();
-        data.colorData = ColorData(color.r, color.g, color.b);
-      }
+      uint16_t r, g, b, c;
+      // TCS.getRawData(&r, &g, &b, &c);
+
+      data.colorData = ColorData(r, g, b);
 
       // Get BMS
       data.bms3 = readVoltage(ADS1115_COMP_2_GND);

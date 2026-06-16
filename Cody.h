@@ -28,9 +28,9 @@
 #define TRANSITION_LOOKAHEAD 250.0
 
 // Toolhead
-#define TOOLHEAD_ACCELERATION_MS 100.0
-#define TOOLHEAD_DECELERATION_MM 25.0
-#define TOOLHEAD_MIN_SPEED 60.0
+#define TOOLHEAD_ACCELERATION_MS 250.0
+#define TOOLHEAD_DECELERATION_MM 10.0
+#define TOOLHEAD_MIN_SPEED 30.0
 #define TOOLHEAD_LOOKAHEAD 10.0
 
 // Wheels
@@ -257,8 +257,8 @@ class Cody {
       // Transition data
       PursuitData* transitionData = new PursuitData(data->points, args->transitionLookahead, data->lineIndex);
       Vector3 currentTransitionPoint;
-      double currentTransitionTime;
-      int currentTransitionLineIndex;
+      double currentTransitionTime = 0.0;
+      int currentTransitionLineIndex = 0;
 
       unsigned long msStart = millis();
 
@@ -291,9 +291,9 @@ class Cody {
 
         // Debug
         Plotter::setLimits(0.0, 1000.0);
-        Plotter::plot("lx", lookaheadPoint.x);
-        Plotter::plot("ly", lookaheadPoint.y);
-        Plotter::plot("lz", lookaheadPoint.z);
+        Plotter::plot("lx", args->navigationTarget->target.x);
+        Plotter::plot("ly", args->navigationTarget->target.y);
+        Plotter::plot("lz", args->navigationTarget->target.z);
         Plotter::plot("x", position.x);
         Plotter::plot("y", position.y);
         Plotter::plot("z", position.z);
@@ -303,7 +303,7 @@ class Cody {
 
         // End condition
         bool inLastSegment = data->lineIndex == data->points.size() - 2;
-        double time = Pursuit::getClosestTime(lastSegment, fusionData.position);
+        double time = Pursuit::getClosestTime(lastSegment, position);
         if (inLastSegment && time >= 1) break;
 
         // Acceleration and deceleration
@@ -311,7 +311,7 @@ class Cody {
         double acceleration = Navigation::dmap((msLoop - msStart) / args->accelerationMs, 0.0, 1.0, args->minSpeed, args->speed);
         double deceleration = Navigation::dmap(distance, args->decelerationMm, 0.0, args->speed, args->minSpeed);
         double speed = std::min((inLastSegment && distance <= args->decelerationMm) ? deceleration : acceleration, args->speed);
-        args->moveFunction(fusionData, speed);
+        args->moveFunction(fusionData, std::clamp(speed, 0.0, args->speed));
 
         vTaskDelay(max(1000.0 / HZ - (millis() - msLoop), 0.0));
       }
