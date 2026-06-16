@@ -56,9 +56,11 @@ class Cody {
     }
 
     // Drive
-    static Task* moveAsync(double x, double y, double speed = 50, double lookaheadDistance = MOVEMENT_LOOKAHEAD) {
+    static Task* moveAsync(double x, double y, double speed = 50, bool backwards = false, double lookaheadDistance = MOVEMENT_LOOKAHEAD, 
+      double transitionDistance = TRANSITION_LOOKAHEAD, double decelerationMm = MOVEMENT_DECELERATION_MM) {
+
       addPathPoint(x, y);
-      return followPathAsync(speed, lookaheadDistance);
+      return followPathAsync(speed, backwards, lookaheadDistance, transitionDistance, decelerationMm);
     }
 
     static void addPathPoint(double x, double y) {
@@ -66,7 +68,9 @@ class Cody {
       pathData.points.push_back(point);
     }
 
-    static Task* followPathAsync(double speed = 50, double lookaheadDistance = MOVEMENT_LOOKAHEAD) {
+    static Task* followPathAsync(double speed = 50, bool backwards = false, double lookaheadDistance = MOVEMENT_LOOKAHEAD, 
+      double transitionDistance = TRANSITION_LOOKAHEAD, double decelerationMm = MOVEMENT_DECELERATION_MM) {
+
       Task* task = new Task("followPath", followPathTask);
       FollowPathArgs* args = new FollowPathArgs();
       pathData.lookaheadDistance = lookaheadDistance;
@@ -76,12 +80,14 @@ class Cody {
       args->speed = speed / 100.0;
       args->minSpeed = MOVEMENT_MIN_SPEED / 100.0;
       args->accelerationMs = MOVEMENT_ACCELERATION_MS;
-      args->decelerationMm = MOVEMENT_DECELERATION_MM;
-      args->transitionLookahead = TRANSITION_LOOKAHEAD;
+      args->decelerationMm = decelerationMm;
+      args->transitionLookahead = transitionDistance;
       args->positionMember = &FusionData::position;
       args->navigationTarget = &Navigation::drive;
-      args->moveFunction = &moveRobot;
       args->stopFunction = &stopRobot;
+
+      if (backwards) args->moveFunction = &moveRobotBackwards;
+      else args->moveFunction = &moveRobot;
 
       task->start(args);
       return task;
@@ -385,6 +391,11 @@ class Cody {
     // Move functions
     static void moveRobot(FusionData fusionData, double speed) {
       NavigationData navigationData = Navigation::getData(fusionData, speed);
+      hardwareProvider->move(navigationData);
+    }
+
+    static void moveRobotBackwards(FusionData fusionData, double speed) {
+      NavigationData navigationData = Navigation::getData(fusionData, speed, true);
       hardwareProvider->move(navigationData);
     }
 

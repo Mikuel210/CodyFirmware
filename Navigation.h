@@ -21,20 +21,21 @@ class Navigation {
     static NavigationTarget wheels;
     static NavigationTarget mill;
 
-    static NavigationData getData(FusionData fusionData, double speed) {
+    static NavigationData getData(FusionData fusionData, double speed, bool backwards = false) {
       NavigationData navigationData;
 
       // Get orientation correction
       float targetOrientation = atan2(drive.target.x - fusionData.position.x, drive.target.y - fusionData.position.y) * (180.0 / M_PI);
-      float error = targetOrientation - fusionData.orientation;
+      if (backwards) targetOrientation = atan2(fusionData.position.x - drive.target.x, fusionData.position.y - drive.target.y) * (180.0 / M_PI);
 
+      float error = targetOrientation - fusionData.orientation;
       while (error > 180.0) { error -= 360.0; targetOrientation -= 360.0; }
       while (error < -180.0) { error += 360.0; targetOrientation += 360.0; }
 
       // Get distance correction
       double orientationCorrection = -orientationPid.getCorrection(error);
       double distanceAuthority = std::clamp(1.0 - std::abs(orientationCorrection) * ERROR_DECELERATION, 0.0, 1.0);
-      double distancePwm = 255.0 / 2.0 * distanceAuthority;
+      double distancePwm = 255.0 / 2.0 * distanceAuthority * (backwards ? -1.0 : 1.0);
 
       // Construct navigation data
       navigationData.leftMotor = getMotorData(distancePwm + orientationCorrection, speed);

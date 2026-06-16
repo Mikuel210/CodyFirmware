@@ -27,12 +27,12 @@
 #define A4_IN_1 10
 #define A4_IN_2 11
 
+// Max switch speed
+#define MIN_DIRECTION_SWITCH_MS 500.0
+
 // State indication
 #define LED 12
 #define BUZZER 5
-
-// PWM to PPM
-#define WHEELS_MAX_PPM 36240
 
 class RobotHardwareProvider : public IHardwareProvider {
   public:

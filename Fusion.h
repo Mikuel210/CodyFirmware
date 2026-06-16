@@ -53,7 +53,7 @@ class Fusion {
       fusionData.orientation = orientation;
       fusionData.position = Vector3(previousFusionData.position.x + deltaX, previousFusionData.position.y + deltaY, 0);
       fusionData.toolheadPosition = Vector3(previousFusionData.toolheadPosition.x + toolheadDeltaX, previousFusionData.toolheadPosition.y + toolheadDeltaZ);
-      fusionData.wheelsPosition = Vector3(previousFusionData.wheelsPosition.x + wheelsDelta);
+      fusionData.wheelsPosition = Vector3(previousFusionData.wheelsPosition.x - wheelsDelta);
       fusionData.millPosition = Vector3(previousFusionData.millPosition.x + millDelta);
       fusionData.voltage = averageVoltage;
 
