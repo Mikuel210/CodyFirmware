@@ -2,6 +2,8 @@
 class Program {
   public:
     static void go() {
+      Fusion::restart();
+
       cemento();
     }
 
@@ -18,7 +20,7 @@ class Program {
       Cody::addPathPoint(0, 350);
       Cody::addPathPoint(0, 0);
       Cody::addPathPoint(-100, 0);
-      Cody::followPathAsync(35, false, 50, 75, 50)->await();
+      Cody::followPathAsync(35, false, 75, 75, 50)->await();
     }
 
     static void bloques() {

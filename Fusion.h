@@ -7,7 +7,7 @@
 #include <vector>
 
 // Fusion parameters
-#define TRAVEL_PER_REVOLUTION_MM 276.460153516
+#define TRAVEL_PER_REVOLUTION_MM 272.376083066
 #define X_AXIS_MM_PER_REVOLUTION 43.9822971503
 #define Z_AXIS_MM_PER_REVOLUTION 56.5486677646
 #define WHEELS_MM_PER_REVOLUTION 38.2790981791
@@ -62,6 +62,10 @@ class Fusion {
       previousFusionData = fusionData;
 
       return fusionData;
+    }
+
+    static void restart() {
+      previousFusionData = FusionData();
     }
 
     static void homingComplete() {
