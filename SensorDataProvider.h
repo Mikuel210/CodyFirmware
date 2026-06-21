@@ -1,7 +1,7 @@
 #pragma once
 #include "IDataProvider.h"
 #include "GPIO.h"
-#include "TCS34725.h"
+#include <TCS_Clone.h>
 #include <Arduino.h>
 #include <Wire.h>
 #include <ESP32Encoder.h>
@@ -35,7 +35,7 @@
 
 // Sensors
 ADS1115_WE ADS = ADS1115_WE(ADS_ADDRESS);
-TCS34725 TCS;
+TCS_Clone TCS;
 
 class SensorDataProvider : public IDataProvider {
   public:
@@ -63,11 +63,8 @@ class SensorDataProvider : public IDataProvider {
       ADS.setVoltageRange_mV(ADS1115_RANGE_6144);
 
       // Initialize TCS34725
-      Wire.begin();
-      if (!TCS.attach(Wire)) Serial.println("Error initializing TCS34725");
-
-      TCS.integrationTime(33);
-      TCS.gain(TCS34725::Gain::X01);
+      if (!TCS.begin()) Serial.println("Error initializing TCS34725");
+      TCS.setGain(TCS_GAIN_16X);
 
       // Initialize PCF8575
       GPIO::initialize();
@@ -107,7 +104,7 @@ class SensorDataProvider : public IDataProvider {
       data.millPulses = millEncoder.getCount();
 
       // Get color sensor
-      TCS34725::Color color = TCS.color();
+      RGBC color = TCS.read();
       data.colorData = ColorData(color.r, color.g, color.b);
 
       // Get BMS

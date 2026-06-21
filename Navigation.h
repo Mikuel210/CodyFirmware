@@ -11,7 +11,7 @@
 #include "PID.h"
 
 // Navigation parameters
-#define ERROR_DECELERATION 0.006
+#define ERROR_DECELERATION 0.0045
 
 class Navigation {
   public:
