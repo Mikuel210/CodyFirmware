@@ -68,6 +68,12 @@ class Fusion {
       previousFusionData = FusionData();
     }
 
+    static void setPosition(Vector3 position, double orientation) {
+      previousFusionData = FusionData();
+      previousFusionData.position = position;
+      previousFusionData.orientation = orientation;
+    }
+
     static void homingComplete() {
       previousFusionData.toolheadPosition = Vector3();
     }

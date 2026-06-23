@@ -33,6 +33,10 @@
 #define LIMIT_2 14
 #define BUTTON 15
 
+// Camera
+#define CAM_RX 25
+#define CAM_TX 23
+
 // Sensors
 ADS1115_WE ADS = ADS1115_WE(ADS_ADDRESS);
 TCS_Clone TCS;
@@ -82,6 +86,9 @@ class SensorDataProvider : public IDataProvider {
       wheelsEncoder.setCount(0);
       millEncoder.attachHalfQuad(A4_A, A4_B);
       millEncoder.setCount(0);
+
+      // Initialize camera communication
+      Serial2.begin(9600, SERIAL_8N1, CAM_RX, CAM_TX);
     }
 
     SensorData getData() override {

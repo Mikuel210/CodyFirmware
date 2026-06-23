@@ -56,7 +56,7 @@ class Cody {
     }
 
     // Drive
-    static Task* moveAsync(double x, double y, double speed = 50, bool backwards = false, double lookaheadDistance = MOVEMENT_LOOKAHEAD, 
+    static Task* moveAsync(double x, double y, double speed = 40, bool backwards = false, double lookaheadDistance = MOVEMENT_LOOKAHEAD, 
       double transitionDistance = TRANSITION_LOOKAHEAD, double decelerationMm = MOVEMENT_DECELERATION_MM) {
 
       addPathPoint(x, y);
@@ -65,10 +65,22 @@ class Cody {
 
     static void addPathPoint(double x, double y) {
       Vector3 point = Vector3(x, y);
+      Vector3 firstPoint;
+
+      // Move pointer
+      if (pathData.points.size() == 0)
+        firstPoint = Fusion::getData(dataProvider.getData()).position;
+      else
+        firstPoint = pathData.points[0];
+
+      pointer = point;
+      orientation = atan2(point.x - firstPoint.x, point.y - firstPoint.y) * (180.0 / M_PI);
+      
+      // Add point
       pathData.points.push_back(point);
     }
 
-    static Task* followPathAsync(double speed = 50, bool backwards = false, double lookaheadDistance = MOVEMENT_LOOKAHEAD, 
+    static Task* followPathAsync(double speed = 40, bool backwards = false, double lookaheadDistance = MOVEMENT_LOOKAHEAD, 
       double transitionDistance = TRANSITION_LOOKAHEAD, double decelerationMm = MOVEMENT_DECELERATION_MM) {
 
       Task* task = new Task("followPath", followPathTask);
@@ -91,6 +103,30 @@ class Cody {
 
       task->start(args);
       return task;
+    }
+
+    // Movement
+    static Vector3 pointer;
+    static double orientation;
+
+    static void forwards(double distance) {
+      double x = pointer.x + distance * sin(orientation);
+      double y = pointer.y + distance * cos(orientation);
+      addPathPoint(x, y);
+    }
+
+    static void backwards(double distance) {
+      forwards(-distance);
+    }
+    
+    static void turn(double degrees) {
+      orientation += degrees;
+    }
+
+    static void setPosition(double x, double y, double theta) {
+      pointer = Vector3(x, y);
+      orientation = theta;
+      Fusion::setPosition(pointer, orientation);
     }
 
     // Toolhead

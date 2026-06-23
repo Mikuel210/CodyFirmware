@@ -29,6 +29,7 @@
 
 // Max switch speed
 #define MIN_DIRECTION_SWITCH_MS 500.0
+#define MAX_PWM_CHANGE 
 
 // State indication
 #define LED 12
@@ -51,8 +52,40 @@ class RobotHardwareProvider : public IHardwareProvider {
       moveMotor(navigationData.leftMotor, R_IN_1, R_IN_2, R_PWM);
     }
 
+
+    int xAxisPwm = 0;
+    bool xAxisForwards = false;
+    bool xAxisDirectionChange = 0;
+
+    int zAxisPwm = 0;
+    bool zAxisForwards = false;
+    bool zAxisDirectionChange = 0;
+
     void moveToolhead(ToolheadData toolheadData) override {
       toolheadData.zAxisMotor.forwards = !toolheadData.zAxisMotor.forwards;
+
+      if ()
+      
+      if (toolheadData.xAxisMotor.forwards != xAxisForwards && (millis() - xAxisDirectionChange) < MIN_DIRECTION_CHANGE_MS)
+      {
+        toolheadData.xAxisMotor.forwards = xAxisForwards;
+      } 
+      else
+      {
+        xAxisForwards = toolheadData.xAxisMotor.forwards;
+        xAxisDirectionChange = millis();
+      }
+
+      if (toolheadData.zAxisMotor.forwards != zAxisForwards && (millis() - zAxisDirectionChange) < MIN_DIRECTION_CHANGE_MS)
+      {
+        toolheadData.zAxisMotor.forwards = zAxisForwards;
+      } 
+      else
+      {
+        zAxisForwards = toolheadData.zAxisMotor.forwards;
+        zAxisDirectionChange = millis();
+      }
+
       moveMotor(toolheadData.xAxisMotor, A1_IN_1, A1_IN_2, A1_PWM);
       moveMotor(toolheadData.zAxisMotor, A2_IN_1, A2_IN_2, A2_PWM);
     }
