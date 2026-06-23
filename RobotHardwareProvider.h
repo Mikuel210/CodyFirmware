@@ -27,9 +27,8 @@
 #define A4_IN_1 10
 #define A4_IN_2 11
 
-// Max switch speed
-#define MIN_DIRECTION_SWITCH_MS 500.0
-#define MAX_PWM_CHANGE 
+// Driver protection
+#define MAX_PWM_PER_SECOND 255.0
 
 // State indication
 #define LED 12
@@ -52,50 +51,24 @@ class RobotHardwareProvider : public IHardwareProvider {
       moveMotor(navigationData.leftMotor, R_IN_1, R_IN_2, R_PWM);
     }
 
-
-    int xAxisPwm = 0;
-    bool xAxisForwards = false;
-    bool xAxisDirectionChange = 0;
-
-    int zAxisPwm = 0;
-    bool zAxisForwards = false;
-    bool zAxisDirectionChange = 0;
-
     void moveToolhead(ToolheadData toolheadData) override {
-      toolheadData.zAxisMotor.forwards = !toolheadData.zAxisMotor.forwards;
+      // Driver protection
+      xAxisPwm = getPwm(toolheadData.xAxisMotor, xAxisPwm);
+      zAxisPwm = getPwm(toolheadData.zAxisMotor, zAxisPwm);
 
-      if ()
-      
-      if (toolheadData.xAxisMotor.forwards != xAxisForwards && (millis() - xAxisDirectionChange) < MIN_DIRECTION_CHANGE_MS)
-      {
-        toolheadData.xAxisMotor.forwards = xAxisForwards;
-      } 
-      else
-      {
-        xAxisForwards = toolheadData.xAxisMotor.forwards;
-        xAxisDirectionChange = millis();
-      }
-
-      if (toolheadData.zAxisMotor.forwards != zAxisForwards && (millis() - zAxisDirectionChange) < MIN_DIRECTION_CHANGE_MS)
-      {
-        toolheadData.zAxisMotor.forwards = zAxisForwards;
-      } 
-      else
-      {
-        zAxisForwards = toolheadData.zAxisMotor.forwards;
-        zAxisDirectionChange = millis();
-      }
-
-      moveMotor(toolheadData.xAxisMotor, A1_IN_1, A1_IN_2, A1_PWM);
-      moveMotor(toolheadData.zAxisMotor, A2_IN_1, A2_IN_2, A2_PWM);
+      // Move motors
+      moveMotor({ std::abs(xAxisPwm), xAxisPwm > 0 ? true : false }, A1_IN_1, A1_IN_2, A1_PWM);
+      moveMotor({ std::abs(zAxisPwm), zAxisPwm < 0 ? true : false }, A2_IN_1, A2_IN_2, A2_PWM);
     }
 
     void moveWheels(WheelsData wheelsData) override {
-      moveMotor(wheelsData.wheelsMotor, A3_IN_1, A3_IN_2, A3_PWM);
+      wheelsPwm = getPwm(wheelsData.wheelsMotor, wheelsPwm);
+      moveMotor({ std::abs(wheelsPwm), wheelsPwm > 0 ? true : false }, A3_IN_1, A3_IN_2, A3_PWM);
     }
 
     void moveMill(MillData millData) override {
-      moveMotor(millData.millMotor, A4_IN_1, A4_IN_2, A4_PWM);
+      millPwm = getPwm(millData.millMotor, millPwm);
+      moveMotor({ std::abs(millPwm), millPwm > 0 ? true : false }, A4_IN_1, A4_IN_2, A4_PWM);
     }
 
     void writeLed(uint8_t value) override {
@@ -112,6 +85,10 @@ class RobotHardwareProvider : public IHardwareProvider {
     }
 
   private:
+    int xAxisPwm = 0;
+    int zAxisPwm = 0;
+    int wheelsPwm = 0;
+
     void moveMotor(MotorData motorData, unsigned int in1, unsigned int in2, unsigned int pwm) {
       if (motorData.forwards) {
         GPIO::digitalWrite(in1, HIGH);
@@ -122,5 +99,11 @@ class RobotHardwareProvider : public IHardwareProvider {
       }
 
       analogWrite(pwm, motorData.pwm);
+    }
+
+    void getPwm(MotorData motorData, int pwm) {
+      int requestedPwm = motorData.pwm * (motorData.forwards ? 1 : -1);
+      if (requestedPwm > pwm + (MAX_PWM_PER_SECOND / HZ)) requestedPwm = pwm + (MAX_PWM_PER_SECOND / HZ);
+      if (requestedPwm < pwm - (MAX_PWM_PER_SECOND / HZ)) requestedPwm = pwm - (MAX_PWM_PER_SECOND / HZ);
     }
 };
