@@ -2,19 +2,21 @@
 #pragma region Program Parameters
 
 // Note: 0, 0 is the center of the start area
+// 87
+// 135
 
 // General
-#define START_X -10
-#define ALIGN_SET_X 50
-#define ALIGN_SET_Y -50
+#define START_X 4
+#define ALIGN_SET_X 48
+#define ALIGN_SET_Y -48
 #define ALIGN_DISTANCE 150
 #define ALIGN_SPEED 30
 
 // Blocks
-#define FIRST_GROUP_WALL_X_MM 150
-#define BLOCK_GROUPS_INCREMENT 100
-#define BLOCK_DISTANCE_START 50
-#define BLOCK_DISTANCE_MOSAIC 40
+#define FIRST_GROUP_WALL_X_MM -170
+#define BLOCK_GROUPS_INCREMENT -160
+#define BLOCK_DISTANCE_START 64
+#define BLOCK_DISTANCE_MOSAIC 50
 #define BLOCK_HEIGHT 30
 
 // Toolhead
