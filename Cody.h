@@ -69,7 +69,7 @@ class Cody {
 
       // Move pointer
       if (pathData.points.size() == 0)
-        firstPoint = Fusion::getData(dataProvider.getData()).position;
+        firstPoint = Fusion::getData(dataProvider->getData()).position;
       else
         firstPoint = pathData.points[0];
 
@@ -305,6 +305,8 @@ class Cody {
       unsigned long msStart = millis();
 
       while (true) {
+        if (*(args->task->requestStop)) break;
+
         unsigned long msLoop = millis();
 
         SensorData sensorData = dataProvider->getData();
@@ -333,12 +335,10 @@ class Cody {
 
         // Debug
         Plotter::setLimits(0.0, 1000.0);
-        Plotter::plot("lx", args->navigationTarget->target.x);
-        Plotter::plot("ly", args->navigationTarget->target.y);
-        Plotter::plot("lz", args->navigationTarget->target.z);
         Plotter::plot("x", position.x);
         Plotter::plot("y", position.y);
-        Plotter::plot("z", position.z);
+        Plotter::plot("l", sensorData.leftPulses);
+        Plotter::plot("r", sensorData.rightPulses);
         Plotter::plot("θ", fusionData.orientation);
         Plotter::plot("v", fusionData.voltage);
         Plotter::endPlot();

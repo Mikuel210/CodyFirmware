@@ -47,8 +47,8 @@ class RobotHardwareProvider : public IHardwareProvider {
     }
 
     void move(NavigationData navigationData) override {
-      moveMotor(navigationData.rightMotor, L_IN_1, L_IN_2, L_PWM);
-      moveMotor(navigationData.leftMotor, R_IN_1, R_IN_2, R_PWM);
+      moveMotor(navigationData.leftMotor, L_IN_1, L_IN_2, L_PWM);
+      moveMotor(navigationData.rightMotor, R_IN_2, R_IN_1, R_PWM);
     }
 
     void moveToolhead(ToolheadData toolheadData) override {
@@ -88,6 +88,7 @@ class RobotHardwareProvider : public IHardwareProvider {
     int xAxisPwm = 0;
     int zAxisPwm = 0;
     int wheelsPwm = 0;
+    int millPwm = 0;
 
     void moveMotor(MotorData motorData, unsigned int in1, unsigned int in2, unsigned int pwm) {
       if (motorData.forwards) {
@@ -101,9 +102,11 @@ class RobotHardwareProvider : public IHardwareProvider {
       analogWrite(pwm, motorData.pwm);
     }
 
-    void getPwm(MotorData motorData, int pwm) {
+    int getPwm(MotorData motorData, int pwm) {
       int requestedPwm = motorData.pwm * (motorData.forwards ? 1 : -1);
       if (requestedPwm > pwm + (MAX_PWM_PER_SECOND / HZ)) requestedPwm = pwm + (MAX_PWM_PER_SECOND / HZ);
       if (requestedPwm < pwm - (MAX_PWM_PER_SECOND / HZ)) requestedPwm = pwm - (MAX_PWM_PER_SECOND / HZ);
+
+      return requestedPwm;
     }
 };

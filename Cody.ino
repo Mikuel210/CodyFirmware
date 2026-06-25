@@ -44,17 +44,11 @@ void waitForButton() {
 
 void loop() {
 
-/*
-  SensorData sd = dataProvider.getData();
-  FusionData fd = Fusion::getData(sd);
 
-  Plotter::plot("r", sd.colorData.r);
-  Plotter::plot("g", sd.colorData.g);
-  Plotter::plot("b", sd.colorData.b);
-  Plotter::plot("c", fd.color);
-  Plotter::endPlot();
 
-  delay(1000);
-*/
+  Serial.print(digitalRead(26)); Serial.print(" | ");
+  Serial.print(digitalRead(27)); Serial.print(" | ");
+  Serial.print(digitalRead(32)); Serial.print(" | ");
+  Serial.print(digitalRead(33)); Serial.println(" | ");
 
 }

@@ -4,6 +4,7 @@
 class Task {
   public:
     volatile bool* finished = new bool(false);
+    volatile bool* requestStop = new bool(false);
 
     Task(const char* name_, void (*function_)(void*))
       : name(name_), function(function_) {}
