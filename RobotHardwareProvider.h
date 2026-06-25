@@ -28,7 +28,7 @@
 #define A4_IN_2 11
 
 // Driver protection
-#define MAX_PWM_PER_SECOND 255.0
+#define MAX_PWM_PER_TICK 5
 
 // State indication
 #define LED 12
@@ -57,18 +57,18 @@ class RobotHardwareProvider : public IHardwareProvider {
       zAxisPwm = getPwm(toolheadData.zAxisMotor, zAxisPwm);
 
       // Move motors
-      moveMotor({ std::abs(xAxisPwm), xAxisPwm > 0 ? true : false }, A1_IN_1, A1_IN_2, A1_PWM);
-      moveMotor({ std::abs(zAxisPwm), zAxisPwm < 0 ? true : false }, A2_IN_1, A2_IN_2, A2_PWM);
+      moveMotor({ xAxisPwm > 0 ? true : false, std::abs(xAxisPwm) }, A1_IN_1, A1_IN_2, A1_PWM);
+      moveMotor({ zAxisPwm > 0 ? true : false, std::abs(zAxisPwm) }, A2_IN_1, A2_IN_2, A2_PWM);
     }
 
     void moveWheels(WheelsData wheelsData) override {
       wheelsPwm = getPwm(wheelsData.wheelsMotor, wheelsPwm);
-      moveMotor({ std::abs(wheelsPwm), wheelsPwm > 0 ? true : false }, A3_IN_1, A3_IN_2, A3_PWM);
+      moveMotor({ wheelsPwm > 0 ? true : false, std::abs(wheelsPwm) }, A3_IN_1, A3_IN_2, A3_PWM);
     }
 
     void moveMill(MillData millData) override {
       millPwm = getPwm(millData.millMotor, millPwm);
-      moveMotor({ std::abs(millPwm), millPwm > 0 ? true : false }, A4_IN_1, A4_IN_2, A4_PWM);
+      moveMotor({ millPwm > 0 ? true : false, std::abs(millPwm) }, A4_IN_1, A4_IN_2, A4_PWM);
     }
 
     void writeLed(uint8_t value) override {
@@ -104,8 +104,8 @@ class RobotHardwareProvider : public IHardwareProvider {
 
     int getPwm(MotorData motorData, int pwm) {
       int requestedPwm = motorData.pwm * (motorData.forwards ? 1 : -1);
-      if (requestedPwm > pwm + (MAX_PWM_PER_SECOND / HZ)) requestedPwm = pwm + (MAX_PWM_PER_SECOND / HZ);
-      if (requestedPwm < pwm - (MAX_PWM_PER_SECOND / HZ)) requestedPwm = pwm - (MAX_PWM_PER_SECOND / HZ);
+      if (requestedPwm > pwm + MAX_PWM_PER_TICK) requestedPwm = pwm + MAX_PWM_PER_TICK;
+      if (requestedPwm < pwm - MAX_PWM_PER_TICK) requestedPwm = pwm - MAX_PWM_PER_TICK;
 
       return requestedPwm;
     }

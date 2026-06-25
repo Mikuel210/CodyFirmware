@@ -34,8 +34,8 @@
 #define BUTTON 15
 
 // Camera
-#define CAM_RX 25
-#define CAM_TX 23
+#define CAM_RX 23
+#define CAM_TX 25
 
 // Sensors
 ADS1115_WE ADS = ADS1115_WE(ADS_ADDRESS);

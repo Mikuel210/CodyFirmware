@@ -30,7 +30,11 @@ void setup() {
   BMS::initialize();
 
   waitForButton();
-  Program::go();
+  Serial2.println("GO");
+  
+  //Cody::homeAsync()->await();
+
+  //Program::go();
 }
 
 void waitForButton() {
@@ -42,13 +46,4 @@ void waitForButton() {
   }
 }
 
-void loop() {
-
-
-
-  Serial.print(digitalRead(26)); Serial.print(" | ");
-  Serial.print(digitalRead(27)); Serial.print(" | ");
-  Serial.print(digitalRead(32)); Serial.print(" | ");
-  Serial.print(digitalRead(33)); Serial.println(" | ");
-
-}
+void loop() {}

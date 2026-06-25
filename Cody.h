@@ -389,9 +389,7 @@ class Cody {
 
         MotorData xAxis(false, xLimit ? 0 : pwm);
         MotorData zAxis(false, zLimit ? 0 : pwm);
-        ToolheadData toolheadData { xAxis, zAxis };
-
-        hardwareProvider->moveToolhead(toolheadData);
+        hardwareProvider->moveToolhead({ xAxis, zAxis });
 
         if (sensorData.xLimit && sensorData.zLimit) break;
         vTaskDelay(max(1000.0 / HZ - (millis() - msStart), 0.0));
