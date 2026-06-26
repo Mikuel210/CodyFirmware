@@ -15,6 +15,12 @@
 #define N20_TICKS_PER_REVOLUTION 5000.0
 #define DISTANCE_BETWEEN_WHEELS_MM 228.0
 
+// Colors
+#define SATURATION_THRESHOLD 0.1
+#define HUE_YELLOW 60.0
+#define HUE_GREEN 125.0f
+#define HUE_BLUE 220.0
+
 class Fusion {
   public:
     static FusionData getData(SensorData sensorData) {
@@ -84,31 +90,55 @@ class Fusion {
 
     static FusionData previousFusionData;
     static SensorData previousSensorData;
-    static ColorData colorValues[5];
 
     static Color rgbToColor(ColorData colorData) {
-      std::vector<int> differences;
+      // Convert RGB to HSV
+      double r = colorData.r / 65535.0;
+      double g = colorData.g / 65535.0;
+      double b = colorData.b / 65535.0;
 
-      for (ColorData compared : colorValues) {
-        int differenceR = std::abs(colorData.r - compared.r);
-        int differenceG = std::abs(colorData.g - compared.g);
-        int differenceB = std::abs(colorData.b - compared.b);
-        differences.push_back(differenceR + differenceG + differenceB);
+      double cmax  = r > g ? (r > b ? r : b) : (g > b ? g : b);
+      double cmin  = r < g ? (r < b ? r : b) : (g < b ? g : b);
+      double delta = cmax - cmin;
+
+      double s = (cmax > 0.0) ? (delta / cmax) : 0.0;
+
+      // Low saturation
+      if (s < SATURATION_THRESHOLD)
+      {
+        if (cmax > 0.5) return WHITE;
+        return BLACK;
       }
 
-      // Get min difference
-      int minIndex = 0;
-      int minValue = 255;
+      // Get hue
+      double h;
 
-      for (int i = 0; i < differences.size(); i++) {
-        int value = differences[i];
-        if (value >= minValue) continue;
+      if (cmax == r)
+        h = 60.0f * std::fmod((g - b) / delta, 6.0f);
+      else if (cmax == g)
+        h = 60.0f * ((b - r) / delta + 2.0f);
+      else
+        h = 60.0f * ((r - g) / delta + 4.0f);
+      
+      if (h < 0.0f) h += 360.0f;
 
-        minValue = value;
-        minIndex = i;
+      // Find color with smallest hue distance
+      const double hues[]  = { HUE_YELLOW, HUE_GREEN, HUE_BLUE };
+      const Color colors[] = { YELLOW,     GREEN,     BLUE     };
+
+      double minDistance = 361.0f;
+      Color result = WHITE;
+
+      for (int i = 0; i < 3; i++) {
+        float distance = std::abs(h - hues[i]);
+        if (distance > 180.0f) distance = 360.0f - distance;
+        
+        if (distance < minDistance) {
+          minDistance = distance;
+          result = colors[i];
+        }
       }
 
-      // Return closest match
-      return static_cast<Color>(minIndex);
+      return result;
     }
 };

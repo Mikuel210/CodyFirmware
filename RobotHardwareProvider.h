@@ -57,8 +57,10 @@ class RobotHardwareProvider : public IHardwareProvider {
       zAxisPwm = getPwm(toolheadData.zAxisMotor, zAxisPwm);
 
       // Move motors
-      moveMotor({ xAxisPwm > 0 ? true : false, std::abs(xAxisPwm) }, A1_IN_1, A1_IN_2, A1_PWM);
-      moveMotor({ zAxisPwm > 0 ? true : false, std::abs(zAxisPwm) }, A2_IN_1, A2_IN_2, A2_PWM);
+      //moveMotor({ xAxisPwm > 0 ? true : false, std::abs(xAxisPwm) }, A2_IN_1, A2_IN_2, A2_PWM);
+      //moveMotor({ zAxisPwm > 0 ? true : false, std::abs(zAxisPwm) }, A1_IN_1, A1_IN_2, A1_PWM);
+      moveMotor(toolheadData.xAxisMotor, A1_IN_1, A1_IN_2, A1_PWM);
+      moveMotor(toolheadData.zAxisMotor, A2_IN_1, A2_IN_2, A2_PWM);
     }
 
     void moveWheels(WheelsData wheelsData) override {
