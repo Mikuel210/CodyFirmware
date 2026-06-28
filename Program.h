@@ -5,17 +5,18 @@
 #pragma region Program Parameters
 
 // Note: 0, 0 is the center of the start area
+
 // General
 #define START_X 4
 #define ALIGN_SET_X 48
 #define ALIGN_SET_Y -48
 #define ALIGN_DISTANCE 500
-#define ALIGN_SPEED 45
+#define ALIGN_SPEED 40
 #define ALIGN_MS 2000
 
 // Blocks
 #define FIRST_GROUP_WALL_X_MM -170
-#define BLOCK_GROUPS_INCREMENT -160
+#define BLOCK_GROUPS_INCREMENT 0//-160
 #define BLOCK_DISTANCE_START 64
 #define BLOCK_DISTANCE_MOSAIC 50
 #define BLOCK_HEIGHT 30
@@ -26,9 +27,11 @@
 #define TOOLHEAD_PICK_START_X 50
 #define TOOLHEAD_LEAVE_START_X 80
 
-// Mosaic
+// Map
 #define MOSAIC_X -510
 #define MOSAIC_Y 850
+#define BLOCKS_LINE_DETECT_Y 300
+#define FIRST_LINE_X -275
 
 #pragma endregion
 
@@ -49,39 +52,42 @@ class Program {
       // Home and align
       toolheadTask = Cody::homeAsync();
 
-      Cody::addPathPoint(0, -ALIGN_DISTANCE);
-      align();
+      align(0, -ALIGN_DISTANCE);
       Cody::setPosition(START_X, ALIGN_SET_Y, 0);
 
       // Go to mosaic
       Cody::addPathPoint(START_X, 400);
-      Cody::addPathPoint(-300, 400);
-      Cody::followPathAsync(50, 100, 150, 100)->await();
+      Cody::addPathPoint(-200, 400);
+      Cody::followPathAsync(50, false, 100, 150, 100)->await();
 
-      Cody::addPathPoint(ALIGN_DISTANCE, 400);
-      align();
-      Cody::setPosition(ALIGN_SET_X, 400, -90);
+      align(ALIGN_DISTANCE, 400);
+      Cody::setXOrientation(ALIGN_SET_X, -90);
 
       Cody::addPathPoint(MOSAIC_X, 400);
       Cody::addPathPoint(MOSAIC_X, MOSAIC_Y);
-      Cody::followPathAsync()->await();
+      Cody::followPathAsync(40, false, 100, 200)->await();
 
       // Take picture
       Serial2.println("GO");
       std::vector<Color> colors;
+      unsigned int startMillis = millis();
 
       while (colors.size() < 12) {
+        if ((millis() - startMillis) > 2000) break;
         if (!Serial2.available()) continue;
 
         String message = Serial2.readStringUntil('\n');
         colors.push_back(static_cast<Color>(message.toInt()));
       }
+
+      if (colors.size() == 0)
+        colors = { BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW };
       
       // Initialize variables
       int yellow = std::count(colors.begin(), colors.end(), YELLOW);
       int blue   = std::count(colors.begin(), colors.end(), BLUE);
       int green  = std::count(colors.begin(), colors.end(), GREEN);
-      int white  = std::count(colors.begin(), colors.end(), WHITE);
+      int white  = std::count(colors.begin(), colors.end(), WHITE); 
 
       int colorCounts[4] = { yellow, blue, green, white };
       int pickedCounts[4] = { 0, 0, 0, 0 };
@@ -108,37 +114,40 @@ class Program {
       millTask = Cody::moveMillAsync(0);
 
       Cody::addPathPoint(MOSAIC_X, 400);
-      Cody::addPathPoint(0, 400);
-      Cody::addPathPoint(0, -ALIGN_DISTANCE);
-      
-      moveTask = Cody::followPathAsync(ALIGN_SPEED, true);
-      align();
-      Cody::setPosition(0, ALIGN_SET_Y, 0);
+      Cody::addPathPoint(-25, 400);
+      align(-25, -ALIGN_DISTANCE, 7000, 30, 100, 200);
+      Cody::setYOrientation(ALIGN_SET_Y, 0);
 
-      toolheadTask->await();
+      //toolheadTask->await();
       toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
       
-      Cody::addPathPoint(0, 0);
-      Cody::addPathPoint(-100, 0);
-      Cody::followPathAsync(35, false, 75, 75, 50)->await();
+      Cody::addPathPoint(0, BLOCKS_LINE_DETECT_Y);
+      Cody::addPathPoint(-100, BLOCKS_LINE_DETECT_Y); 
+      Cody::followPathAsync(35, false, 100, 150, 75)->await();
 
-      Cody::addPathPoint(ALIGN_DISTANCE, 0);
-      align();
-      Cody::setPosition(ALIGN_SET_X, 0, -90);
+      align(ALIGN_DISTANCE, BLOCKS_LINE_DETECT_Y);
+      Cody::setXOrientation(ALIGN_SET_X, -90);
 
       // Pick blocks
       for (int i = 0; i < 4; i++) {
         if (*colorCounts[i] == 0 || *pickedCounts[i] == *colorCounts[i]) continue;
-
         if (i != 0) toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
-        moveTask = Cody::moveAsync(FIRST_GROUP_WALL_X_MM + BLOCK_GROUPS_INCREMENT * i, 0);
 
-        millTask->await();
+        //Cody::moveAsync(FIRST_GROUP_WALL_X_MM + BLOCK_GROUPS_INCREMENT * i - 100, BLOCKS_LINE_DETECT_Y)->await();
+        Cody::addPathPoint(-500, BLOCKS_LINE_DETECT_Y);
+        moveTask = Cody::detectColorAsync(500);
+        Cody::setX(FIRST_LINE_X);
+
+        //millTask->await();
         millTask = Cody::moveMillAsync(90);
 
-        toolheadTask->await();
+        //toolheadTask->await();
         moveTask->await();
-        millTask->await();
+        //millTask->await();
+
+        Cody::rotateToAsync(-180)->await();
+
+        pause();
 
         for (int j = *pickedCounts[i]; j < *colorCounts[i]; j++)
         {
@@ -148,7 +157,7 @@ class Program {
             Cody::forwards(BLOCK_DISTANCE_START);
 
             Cody::followPathAsync()->await();
-            toolheadTask->await();
+            //toolheadTask->await();
           }
 
           totalPicked++;
@@ -196,7 +205,7 @@ class Program {
           toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_LEAVE_START_X + BLOCK_DISTANCE_MOSAIC * positions[0], TOOLHEAD_UP);
 
           moveTask->await();
-          toolheadTask->await();
+          //toolheadTask->await();
 
           for (int k : positions)
           {
@@ -210,9 +219,13 @@ class Program {
       }
     }
 
-    static void align() {
-      moveTask = Cody::followPathAsync(ALIGN_SPEED, true);
-      delay(ALIGN_MS);
+    static void align(double x, double y, int ms = ALIGN_MS, double speed = ALIGN_SPEED, double lookaheadDistance = MOVEMENT_LOOKAHEAD, 
+      double transitionLookahead = TRANSITION_LOOKAHEAD, double decelerationMm = MOVEMENT_DECELERATION_MM) {
+
+      Cody::addPathPoint(x, y);
+      moveTask = Cody::followPathAsync(speed, true, lookaheadDistance, transitionLookahead, decelerationMm);
+      delay(ms);
+
       delete moveTask->requestStop;
       moveTask->requestStop = new bool(true);
       moveTask->await();
@@ -234,5 +247,10 @@ class Program {
       Cody::moveToolheadAsync(xPosition, TOOLHEAD_DOWN)->await();
       Cody::moveWheelsAsync(zPosition)->await();
       Cody::moveToolheadAsync(xPosition, TOOLHEAD_UP)->await();
+    }
+
+    static void pause()
+    {
+      delay(999999999);
     }
 };

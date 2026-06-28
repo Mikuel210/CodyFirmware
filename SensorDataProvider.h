@@ -70,6 +70,9 @@ class SensorDataProvider : public IDataProvider {
       if (!TCS.begin()) Serial.println("Error initializing TCS34725");
       TCS.setGain(TCS_GAIN_16X);
 
+      TCS.calibrateBlack({ 2700,  3850,  3800 });
+      TCS.calibrateWhite({ 11450, 12450, 8700 });
+
       // Initialize PCF8575
       GPIO::initialize();
       
@@ -111,7 +114,7 @@ class SensorDataProvider : public IDataProvider {
       data.millPulses = millEncoder.getCount();
 
       // Get color sensor
-      RGBC color = TCS.read();
+      RGBCNorm color = TCS.readNormalised();
       data.colorData = ColorData(color.r, color.g, color.b);
 
       // Get BMS
@@ -121,6 +124,19 @@ class SensorDataProvider : public IDataProvider {
       data.xLimit = GPIO::digitalRead(LIMIT_2) == 1;
       data.zLimit = GPIO::digitalRead(LIMIT_1) == 1;
       data.button = GPIO::digitalRead(BUTTON) == 1;
+
+      return data;
+    }
+
+    SensorData getPulses() override {
+      SensorData data;
+
+      data.leftPulses = leftEncoder.getCount();
+      data.rightPulses = -rightEncoder.getCount();
+      data.xAxisPulses = xEncoder.getCount();
+      data.zAxisPulses = zEncoder.getCount();
+      data.wheelsPulses = wheelsEncoder.getCount();
+      data.millPulses = millEncoder.getCount();
 
       return data;
     }

@@ -74,9 +74,15 @@ class Fusion {
       previousFusionData = FusionData();
     }
 
-    static void setPosition(Vector3 position, double orientation) {
-      previousFusionData = FusionData();
-      previousFusionData.position = position;
+    static void setX(double x) {
+      previousFusionData.position.x = x;
+    }
+
+    static void setY(double y) {
+      previousFusionData.position.y = y;
+    }
+
+    static void setOrientation(double orientation) {
       previousFusionData.orientation = orientation;
     }
 
@@ -93,9 +99,9 @@ class Fusion {
 
     static Color rgbToColor(ColorData colorData) {
       // Convert RGB to HSV
-      double r = colorData.r / 65535.0;
-      double g = colorData.g / 65535.0;
-      double b = colorData.b / 65535.0;
+      double r = colorData.r;
+      double g = colorData.g;
+      double b = colorData.b;
 
       double cmax  = r > g ? (r > b ? r : b) : (g > b ? g : b);
       double cmin  = r < g ? (r < b ? r : b) : (g < b ? g : b);

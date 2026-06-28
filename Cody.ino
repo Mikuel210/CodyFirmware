@@ -29,8 +29,8 @@ void setup() {
   Cody::initialize(dataProvider, hardwareProvider);
   BMS::initialize();
 
-  waitForButton();  
-  //Program::go();
+  waitForButton();
+  Program::go();
 }
 
 void waitForButton() {
@@ -42,18 +42,4 @@ void waitForButton() {
   }
 }
 
-void loop() {
-
-  SensorData sd = dataProvider.getData();
-  Plotter::setLimits(0, 44000);
-  Plotter::plot("r", sd.colorData.r);
-  Plotter::plot("g", sd.colorData.g);
-  Plotter::plot("b", sd.colorData.b);
-  Plotter::plot("c", Fusion::getData(sd).color);
-  Plotter::endPlot();
-
-
-  delay(100);
-
-
-}
+void loop() {}

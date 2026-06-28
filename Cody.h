@@ -18,7 +18,7 @@
 #include <vector>
 
 // Task parameters
-#define HZ 50.0
+#define HZ 120.0
 
 // Movement
 #define MOVEMENT_ACCELERATION_MS 500.0
@@ -69,7 +69,7 @@ class Cody {
 
       // Move pointer
       if (pathData.points.size() == 0)
-        firstPoint = Fusion::getData(dataProvider->getData()).position;
+        firstPoint = Fusion::getData(dataProvider->getPulses()).position;
       else
         firstPoint = pathData.points[0];
 
@@ -105,6 +105,44 @@ class Cody {
       return task;
     }
 
+    static Task* detectColorAsync(int transitionMs, double startSpeed = 40, double endSpeed = 15, bool backwards = false, Color color = BLACK,
+      double lookaheadDistance = MOVEMENT_LOOKAHEAD, double transitionDistance = TRANSITION_LOOKAHEAD, double decelerationMm = MOVEMENT_DECELERATION_MM) {
+
+      Task* task = new Task("detectColor", detectColorTask);
+      DetectColorArgs* args = new DetectColorArgs();
+      pathData.lookaheadDistance = lookaheadDistance;
+
+      args->task = task;
+      args->transitionMs = transitionMs;
+      args->startSpeed = startSpeed / 100.0;
+      args->endSpeed = endSpeed / 100.0;
+      args->minSpeed = MOVEMENT_MIN_SPEED / 100.0;
+      args->accelerationMs = MOVEMENT_ACCELERATION_MS;
+      args->decelerationMm = decelerationMm;
+      args->transitionLookahead = transitionDistance;
+
+      if (backwards) args->moveFunction = &moveRobotBackwards;
+      else args->moveFunction = &moveRobot;
+
+      task->start(args);
+      return task;
+    }
+
+    static Task* rotateToAsync(double heading, double speed = 25, double decelerationDegrees = 45) {
+      Task* task = new Task("rotate", rotateTask);
+      RotateArgs* args = new RotateArgs();
+
+      args->task = task;
+      args->heading = heading;
+      args->speed = speed / 100.0;
+      args->accelerationMs = MOVEMENT_ACCELERATION_MS;
+      args->decelerationDegrees = decelerationDegrees;
+      args->minSpeed = MOVEMENT_MIN_SPEED / 200.0;
+
+      task->start(args);
+      return task;
+    }
+
     // Movement
     static Vector3 pointer;
     static double orientation;
@@ -126,7 +164,36 @@ class Cody {
     static void setPosition(double x, double y, double theta) {
       pointer = Vector3(x, y);
       orientation = theta;
-      Fusion::setPosition(pointer, orientation);
+
+      Fusion::setX(x);
+      Fusion::setY(y);
+      Fusion::setOrientation(theta);
+    }
+
+    static void setXOrientation(double x, double theta) {
+      pointer.x = x;
+      orientation = theta;
+
+      Fusion::setX(x);
+      Fusion::setOrientation(theta);
+    }
+
+    static void setYOrientation(double y, double theta) {
+      pointer.y = y;
+      orientation = theta;
+
+      Fusion::setX(y);
+      Fusion::setOrientation(theta);
+    }
+
+    static void setX(double x) {
+      pointer.x = x;
+      Fusion::setX(x);
+    }
+
+    static void setY(double y) {
+      pointer.y = y;
+      Fusion::setX(y);
     }
 
     // Toolhead
@@ -241,19 +308,6 @@ class Cody {
       hardwareProvider->writeLed(value);
     }
 
-    // Rotation
-    static Task* rotateToAsync(double heading, double speed = 50) {
-      Task* task = new Task("rotate", rotateTask);
-      RotateArgs* args = new RotateArgs();
-
-      args->task = task;
-      args->heading = heading;
-      args->speed = speed / 100.0;
-
-      task->start(args);
-      return task;
-    }
-
   private:
     static PursuitData pathData;
     static PursuitData toolheadPathData;
@@ -285,7 +339,7 @@ class Cody {
       PursuitData* data = args->data;
       
       // Set first point
-      SensorData sensorData = dataProvider->getData();
+      SensorData sensorData = dataProvider->getPulses();
       FusionData fusionData = Fusion::getData(sensorData);
       args->navigationTarget->decelerationDistance = data->lookaheadDistance;
       
@@ -309,7 +363,7 @@ class Cody {
 
         unsigned long msLoop = millis();
 
-        SensorData sensorData = dataProvider->getData();
+        SensorData sensorData = dataProvider->getPulses();
         FusionData fusionData = Fusion::getData(sensorData);
         Vector3 position = fusionData.*(args->positionMember);
 
@@ -400,19 +454,140 @@ class Cody {
       delete args;
     }
 
+    // Detect color
+    struct DetectColorArgs : TaskArgs {
+      Color color;
+      int transitionMs;
+
+      double startSpeed;
+      double endSpeed;
+      double minSpeed;
+      double accelerationMs;
+      double decelerationMm;
+      double transitionLookahead;
+
+      MoveFunction moveFunction;
+    };
+
+    static void detectColorTask(void* task) {
+      DetectColorArgs* args = (DetectColorArgs*)task;
+      PursuitData* data = &pathData;
+      
+      // Set first point
+      SensorData sensorData = dataProvider->getPulses();
+      FusionData fusionData = Fusion::getData(sensorData);
+      Navigation::drive.decelerationDistance = data->lookaheadDistance;
+      
+      data->lineIndex = 0;
+      data->points.insert(data->points.begin(), fusionData.position);
+      
+      // Get last segment
+      int pointCount = data->points.size();
+      Line lastSegment(data->points[pointCount - 2], data->points[pointCount - 1]);
+      
+      // Transition data
+      PursuitData* transitionData = new PursuitData(data->points, args->transitionLookahead, data->lineIndex);
+      Vector3 currentTransitionPoint;
+      double currentTransitionTime = 0.0;
+      int currentTransitionLineIndex = 0;
+
+      unsigned long msStart = millis();
+
+      while (true) {
+        unsigned long msLoop = millis();
+        bool detectingColor = (msLoop - msStart) >= args->transitionMs;
+
+        SensorData sensorData = dataProvider->getData();
+        FusionData fusionData = Fusion::getData(sensorData);
+        Vector3 position = fusionData.position;
+
+        // Find lookahead and transition points
+        Vector3 lookaheadPoint = Pursuit::findLookahead(position, data, true);
+        Line lookaheadLine = { data->points[data->lineIndex], data->points[data->lineIndex + 1] };
+        double lookaheadTime = Pursuit::findLookaheadTime(position, lookaheadLine, data->lookaheadDistance);
+
+        Vector3 transitionPoint = Pursuit::findLookahead(position, transitionData, true);
+        Line transitionLine = { data->points[transitionData->lineIndex], data->points[transitionData->lineIndex + 1] };
+        double transitionTime = Pursuit::findLookaheadTime(position, transitionLine, transitionData->lookaheadDistance);
+
+        if (transitionData->lineIndex > currentTransitionLineIndex) {
+          currentTransitionPoint = transitionPoint;
+          currentTransitionTime = transitionTime;
+          currentTransitionLineIndex = transitionData->lineIndex;
+        }
+
+        if (data->lineIndex == currentTransitionLineIndex && lookaheadTime > currentTransitionTime)
+          Navigation::drive.target = lookaheadPoint;
+        else
+          Navigation::drive.target = currentTransitionPoint;
+
+        // End condition: finished path
+        bool inLastSegment = data->lineIndex == data->points.size() - 2;
+        double time = Pursuit::getClosestTime(lastSegment, position);
+        if (inLastSegment && time >= 1) break;
+
+        // End condition: color
+        if (detectingColor && fusionData.color == args->color) break;
+
+        // Acceleration and speed transition
+        double acceleration = Navigation::dmap((msLoop - msStart) / args->accelerationMs, 0.0, 1.0, args->minSpeed, args->startSpeed);
+        double speed = detectingColor ? args->endSpeed : std::min(acceleration, args->startSpeed);
+        args->moveFunction(fusionData, std::clamp(speed, 0.0, args->startSpeed));
+
+        vTaskDelay(max(1000.0 / HZ - (millis() - msLoop), 0.0));
+      }
+
+      stopRobot();
+      data->points.clear();
+      args->task->stop();
+
+      delete transitionData;
+      delete args;
+    }
+
     // Rotate
     struct RotateArgs : TaskArgs {
       double heading;
       double speed;
+
+      double accelerationMs;
+      double decelerationDegrees;
+      double minSpeed;
     };
 
     static void rotateTask(void* task) {
       RotateArgs* args = (RotateArgs*)task;
 
-      while (true) {
-        unsigned long msStart = millis();
+      unsigned long msStart = millis();
 
-        // TODO
+      while (true) {
+        unsigned long msLoop = millis();
+
+        SensorData sensorData = dataProvider->getPulses();
+        FusionData fusionData = Fusion::getData(sensorData);
+
+        // Get orientation correction
+        float targetOrientation = args->heading;
+        float error = targetOrientation - fusionData.orientation;
+        while (error > 180.0) { error -= 360.0; targetOrientation -= 360.0; }
+        while (error < -180.0) { error += 360.0; targetOrientation += 360.0; }
+
+        // Acceleration and deceleration
+        double acceleration = Navigation::dmap((msLoop - msStart) / args->accelerationMs, 0.0, 1.0, args->minSpeed, args->speed);
+        double deceleration = Navigation::dmap(std::abs(error), args->decelerationDegrees, 0.0, args->speed, args->minSpeed);
+        double speed = std::min(std::abs(error) <= args->decelerationDegrees ? deceleration : acceleration, args->speed);
+        
+        // Debug
+        Plotter::plot("target", targetOrientation);
+        Plotter::plot("error", error);
+        Plotter::plot("speed", speed);
+        Plotter::endPlot();
+        
+        // End condition
+        if (error > -1.0 && error < 1.0) break;
+
+        // Move
+        hardwareProvider->move({{ error > 0, speed * 255.0 }, { error < 0, speed * 255.0 }});
 
         vTaskDelay(max(1000.0 / HZ - (millis() - msStart), 0.0));
       }
