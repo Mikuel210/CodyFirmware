@@ -23,7 +23,7 @@
 // Movement
 #define MOVEMENT_ACCELERATION_MS 500.0
 #define MOVEMENT_DECELERATION_MM 250.0
-#define MOVEMENT_MIN_SPEED 10.0
+#define MOVEMENT_MIN_SPEED 12
 #define MOVEMENT_LOOKAHEAD 100.0
 #define TRANSITION_LOOKAHEAD 250.0
 
@@ -139,6 +139,7 @@ class Cody {
       args->decelerationDegrees = decelerationDegrees;
       args->minSpeed = MOVEMENT_MIN_SPEED / 200.0;
 
+      orientation = heading;
       task->start(args);
       return task;
     }

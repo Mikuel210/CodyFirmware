@@ -26,6 +26,7 @@
 #define TOOLHEAD_DOWN 0
 #define TOOLHEAD_PICK_START_X 50
 #define TOOLHEAD_LEAVE_START_X 80
+#define COLOR_Y_OFFSET 87
 
 // Map
 #define MOSAIC_X -510
@@ -58,14 +59,14 @@ class Program {
       // Go to mosaic
       Cody::addPathPoint(START_X, 400);
       Cody::addPathPoint(-200, 400);
-      Cody::followPathAsync(50, false, 100, 150, 100)->await();
+      Cody::followPathAsync(50, false)->await();
 
       align(ALIGN_DISTANCE, 400);
       Cody::setXOrientation(ALIGN_SET_X, -90);
 
       Cody::addPathPoint(MOSAIC_X, 400);
       Cody::addPathPoint(MOSAIC_X, MOSAIC_Y);
-      Cody::followPathAsync(40, false, 100, 200)->await();
+      Cody::followPathAsync(40, false)->await();
 
       // Take picture
       Serial2.println("GO");
@@ -115,15 +116,15 @@ class Program {
 
       Cody::addPathPoint(MOSAIC_X, 400);
       Cody::addPathPoint(-25, 400);
-      align(-25, -ALIGN_DISTANCE, 7000, 30, 100, 200);
+      align(-25, -ALIGN_DISTANCE, 7000, 35, 100, 200);
       Cody::setYOrientation(ALIGN_SET_Y, 0);
 
       //toolheadTask->await();
       toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
       
-      Cody::addPathPoint(0, BLOCKS_LINE_DETECT_Y);
+      Cody::addPathPoint(-25, BLOCKS_LINE_DETECT_Y);
       Cody::addPathPoint(-100, BLOCKS_LINE_DETECT_Y); 
-      Cody::followPathAsync(35, false, 100, 150, 75)->await();
+      Cody::followPathAsync(35, false, 75, 100, 75)->await();
 
       align(ALIGN_DISTANCE, BLOCKS_LINE_DETECT_Y);
       Cody::setXOrientation(ALIGN_SET_X, -90);
@@ -136,7 +137,7 @@ class Program {
         //Cody::moveAsync(FIRST_GROUP_WALL_X_MM + BLOCK_GROUPS_INCREMENT * i - 100, BLOCKS_LINE_DETECT_Y)->await();
         Cody::addPathPoint(-500, BLOCKS_LINE_DETECT_Y);
         moveTask = Cody::detectColorAsync(500);
-        Cody::setX(FIRST_LINE_X);
+        Cody::setX(FIRST_LINE_X + COLOR_Y_OFFSET);
 
         //millTask->await();
         millTask = Cody::moveMillAsync(90);
@@ -145,6 +146,7 @@ class Program {
         moveTask->await();
         //millTask->await();
 
+        Cody::moveAsync(-300, BLOCKS_LINE_DETECT_Y)->await();
         Cody::rotateToAsync(-180)->await();
 
         pause();
