@@ -1,6 +1,17 @@
 // Global parameters
-// #define SIMULATION
+#undef SIMULATION
+#define DEBUG
 #define BAUD_RATE 115200
+
+// Debug
+#ifdef DEBUG
+  #include "Plotter.h"
+  #include "Globals.h"
+
+  Plotter plot;
+  double plotX = 0;
+  double plotY = 0; 
+#endif
 
 // Include dependencies
 #include "Cody.h"
@@ -28,6 +39,9 @@ void setup() {
   hardwareProvider.initialize();
   Cody::initialize(dataProvider, hardwareProvider);
   BMS::initialize();
+
+  plot.Begin();
+  plot.AddXYGraph("Position", 1000, "x", plotX, "y", plotY);
 
   waitForButton();
   Program::go();

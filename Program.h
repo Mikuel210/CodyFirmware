@@ -16,7 +16,7 @@
 
 // Blocks
 #define FIRST_GROUP_WALL_X_MM -170
-#define BLOCK_GROUPS_INCREMENT 0//-160
+#define BLOCK_GROUPS_INCREMENT -160
 #define BLOCK_DISTANCE_START 64
 #define BLOCK_DISTANCE_MOSAIC 50
 #define BLOCK_HEIGHT 30
@@ -31,6 +31,7 @@
 // Map
 #define MOSAIC_X -510
 #define MOSAIC_Y 850
+#define MOSAIC_X_OFFSET 30
 #define BLOCKS_LINE_DETECT_Y 300
 #define FIRST_LINE_X -275
 
@@ -87,7 +88,7 @@ class Program {
         colors.push_back(static_cast<Color>(message.toInt()));
       }
 
-      if (colors.size() == 0)
+      if (colors.size() < 12)
         colors = { BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW, YELLOW };
       
       // Initialize variables
@@ -107,16 +108,21 @@ class Program {
         { colors[9], colors[10], colors[11] },
       };
 
-      bool positionsLeft[4][3];
+      bool positionsLeft[4][3] = {
+        {false, false, false},
+        {false, false, false},
+        {false, false, false},
+        {false, false, false}
+    };
 
       // Carry blocks
-      pickBatch(&colorCounts, &pickedCounts, &totalPicked);
-      leaveBatch(&pickedCounts, &mosaic, &positionsLeft, &totalPicked);
-      pickBatch(&colorCounts, &pickedCounts, &totalPicked);
-      leaveBatch(&pickedCounts, &mosaic, &positionsLeft, &totalPicked);
+      pickBatch(colorCounts, pickedCounts, &totalPicked);
+      leaveBatch(pickedCounts, mosaic, positionsLeft, &totalPicked);
+      pickBatch(colorCounts, pickedCounts, &totalPicked);
+      leaveBatch(pickedCounts, mosaic, positionsLeft, &totalPicked);
     }
 
-    static void pickBatch(int (*colorCounts)[4], int (*pickedCounts)[4], int* totalPicked) {
+    static void pickBatch(int* colorCounts, int* pickedCounts, int* totalPicked) {
       // Go to start
       millTask = Cody::moveMillAsync(0);
 
@@ -137,15 +143,22 @@ class Program {
 
       // Pick blocks
       for (int i = 0; i < 4; i++) {
-        if (*colorCounts[i] == 0 || *pickedCounts[i] == *colorCounts[i]) continue;
+
+        Serial.print(colorCounts[i]); Serial.print(" | "); Serial.println(pickedCounts[i]);
+        delay(2000);
+
+        if (colorCounts[i] == 0 || pickedCounts[i] == colorCounts[i]) continue;
         // if (i != 0) toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
 
         //Cody::moveAsync(FIRST_GROUP_WALL_X_MM + BLOCK_GROUPS_INCREMENT * i - 100, BLOCKS_LINE_DETECT_Y)->await();
-        Cody::addPathPoint(-500, BLOCKS_LINE_DETECT_Y);
-        moveTask = Cody::detectColorAsync(750);
+
+        Cody::moveAsync(FIRST_LINE_X + BLOCK_GROUPS_INCREMENT * i - 75, BLOCKS_LINE_DETECT_Y)->await();        
+        Cody::addPathPoint(-2000, BLOCKS_LINE_DETECT_Y);
+        Cody::detectColorAsync(600)->await();
+        Cody::setX(FIRST_LINE_X + COLOR_Y_OFFSET);
 
         //millTask->await();
-        millTask = Cody::moveMillAsync(90);
+        //millTask = Cody::moveMillAsync(90);
 
         toolheadTask->await();
         moveTask->await();
@@ -153,7 +166,8 @@ class Program {
 
         Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y);
         Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y - 150);
-        Cody::followPathAsync(15, false, 25, 25, 15)->await();
+        Cody::followPathAsync(15, false, 20, 25, 15)->await();
+        Cody::rotateToAsync(-180);
 
         Cody::homeZAsync()->await();
         Cody::moveZMsAsync(500)->await();
@@ -161,7 +175,8 @@ class Program {
         Cody::moveZMsAsync(500)->await();
 
         Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y - 150 - BLOCK_DISTANCE_START);
-        Cody::followPathAsync(15, false, 25, 25, 15)->await();
+        Cody::followPathAsync(15, false, 20, 25, 15)->await();
+        Cody::rotateToAsync(-180);
 
         Cody::homeZAsync()->await();
         Cody::moveZMsAsync(500)->await();
@@ -169,7 +184,8 @@ class Program {
         Cody::moveZMsAsync(500)->await();
 
         Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y - 150 - BLOCK_DISTANCE_START * 2);
-        Cody::followPathAsync(15, false, 25, 25, 15)->await();
+        Cody::followPathAsync(15, false, 20, 25, 15)->await();
+        Cody::rotateToAsync(-180);
 
         Cody::homeZAsync()->await();
         Cody::moveZMsAsync(500)->await();
@@ -178,7 +194,7 @@ class Program {
 
         
         /*
-        for (int j = *pickedCounts[i]; j < *colorCounts[i]; j++)
+        for (int j = pickedCounts[0][i]; j < colorCounts[0][i]; j++)
         {
           if (j == 2 || j == 4)
           {
@@ -199,17 +215,17 @@ class Program {
       }
     }
 
-    static void leaveBatch(int (*pickedCounts)[4], int (*mosaic)[4][3], bool (*positionsLeft)[4][3], int* totalPicked) {
+    static void leaveBatch(int* pickedCounts, int (*mosaic)[3], bool (*positionsLeft)[3], int* totalPicked) {
       // Go to mosaic
-      Cody::addPathPoint(0, 0);
+      Cody::addPathPoint(0, 50);
       Cody::followPathAsync(35, true)->await();
-      align(ALIGN_DISTANCE, 0);
+      align(ALIGN_DISTANCE, 50);
       Cody::setXOrientation(ALIGN_SET_X, -90);      
 
       Cody::addPathPoint(0, 0);
       Cody::addPathPoint(0, 400);
-      Cody::addPathPoint(MOSAIC_X, 400);
-      Cody::addPathPoint(MOSAIC_X, MOSAIC_Y);
+      Cody::addPathPoint(MOSAIC_X + MOSAIC_X_OFFSET, 400);
+      Cody::addPathPoint(MOSAIC_X + MOSAIC_X_OFFSET, MOSAIC_Y);
       Cody::followPathAsync(35, false)->await();
 /*
       // Color
@@ -242,7 +258,7 @@ class Program {
           for (int k : positions)
           {
             totalPicked--;
-            positionsLeft[0][j][k] = true;
+            positionsLeft[j][k] = true;
             pick(k, *totalPicked);
 
             if (*totalPicked == 0) return;
