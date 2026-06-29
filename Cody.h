@@ -231,10 +231,34 @@ class Cody {
 
     static Task* homeAsync(double speed = 100) {
       HomeArgs* args = new HomeArgs();
-      Task* task = new Task("homeTask", homeTask);
+      Task* task = new Task("home", homeTask);
 
       args->task = task;
       args->speed = speed / 100.0;
+
+      task->start(args);
+      return task;
+    }
+
+    static Task* homeZAsync(double speed = 100) {
+      HomeArgs* args = new HomeArgs();
+      Task* task = new Task("homeZ", homeZTask);
+
+      args->task = task;
+      args->speed = speed / 100.0;
+
+      task->start(args);
+      return task;
+    }
+
+    static Task* moveZMsAsync(double ms, double speed = 100, bool direction = false) {
+      MoveZMsArgs* args = new MoveZMsArgs();
+      Task* task = new Task("moveZMs", moveZMsTask);
+
+      args->task = task;
+      args->ms = ms;
+      args->speed = speed / 100.0;
+      args->forwards = direction;
 
       task->start(args);
       return task;
@@ -436,7 +460,7 @@ class Cody {
       while (true) {
         unsigned long msStart = millis();
 
-        SensorData sensorData = dataProvider->getData();
+        SensorData sensorData = dataProvider->getButtons();
         FusionData fusionData = Fusion::getData(sensorData);
 
         xLimit = xLimit || sensorData.xLimit;
@@ -451,6 +475,61 @@ class Cody {
       }
 
       Fusion::homingComplete();
+      args->task->stop();
+      delete args;
+    }
+
+    static void homeZTask(void* task) {
+      HomeArgs* args = (HomeArgs*)task;
+      int pwm = (int)(args->speed * 255.0);
+
+      bool zLimit = false;
+      unsigned long msVeryStart = millis();
+
+      while (true) {
+        unsigned long msStart = millis();
+
+        SensorData sensorData = dataProvider->getButtons();
+        FusionData fusionData = Fusion::getData(sensorData);
+
+        zLimit = zLimit || sensorData.zLimit;
+
+        MotorData xAxis(false, 0);
+        MotorData zAxis(true, zLimit ? 0 : pwm);
+        hardwareProvider->moveToolhead({ xAxis, zAxis });
+
+        if (sensorData.zLimit) break;
+        if ((msStart - msVeryStart) >= 1000) break;
+        vTaskDelay(max(1000.0 / HZ - (millis() - msStart), 0.0));
+      }
+
+      Fusion::homingComplete();
+      args->task->stop();
+      delete args;
+    }
+
+    struct MoveZMsArgs : TaskArgs {
+      double ms;
+      double speed;
+      bool forwards;
+    };
+
+    static void moveZMsTask(void* task) {
+      MoveZMsArgs* args = (MoveZMsArgs*)task;
+      int pwm = (int)(args->speed * 255.0);
+
+      unsigned long msVeryStart = millis();
+
+      while (true) {
+        unsigned long msStart = millis();
+
+        hardwareProvider->moveToolhead({{false, 0}, {args->forwards, pwm}});
+
+        if ((msStart - msVeryStart) >= args->ms) break;
+        vTaskDelay(max(1000.0 / HZ - (millis() - msStart), 0.0));
+      }
+
+      hardwareProvider->moveToolhead({{false, 0}, {false, 0}});
       args->task->stop();
       delete args;
     }

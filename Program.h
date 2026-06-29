@@ -51,7 +51,8 @@ class Program {
 
     static void blocks() {
       // Home and align
-      toolheadTask = Cody::homeAsync();
+      //toolheadTask = Cody::homeAsync();
+      toolheadTask = Cody::homeZAsync();
 
       align(0, -ALIGN_DISTANCE);
       Cody::setPosition(START_X, ALIGN_SET_Y, 0);
@@ -64,11 +65,16 @@ class Program {
       align(ALIGN_DISTANCE, 400);
       Cody::setXOrientation(ALIGN_SET_X, -90);
 
+      toolheadTask->await();
+      toolheadTask = Cody::moveZMsAsync(500);
+
       Cody::addPathPoint(MOSAIC_X, 400);
       Cody::addPathPoint(MOSAIC_X, MOSAIC_Y);
       Cody::followPathAsync(40, false)->await();
 
       // Take picture
+      toolheadTask->await();
+
       Serial2.println("GO");
       std::vector<Color> colors;
       unsigned int startMillis = millis();
@@ -119,8 +125,8 @@ class Program {
       align(-25, -ALIGN_DISTANCE, 7000, 35, 100, 200);
       Cody::setYOrientation(ALIGN_SET_Y, 0);
 
-      //toolheadTask->await();
-      toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
+      toolheadTask->await();
+      toolheadTask = Cody::homeZAsync();//Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
       
       Cody::addPathPoint(-25, BLOCKS_LINE_DETECT_Y);
       Cody::addPathPoint(-100, BLOCKS_LINE_DETECT_Y); 
@@ -132,28 +138,49 @@ class Program {
       // Pick blocks
       for (int i = 0; i < 4; i++) {
         if (*colorCounts[i] == 0 || *pickedCounts[i] == *colorCounts[i]) continue;
-        if (i != 0) toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
+        // if (i != 0) toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
 
         //Cody::moveAsync(FIRST_GROUP_WALL_X_MM + BLOCK_GROUPS_INCREMENT * i - 100, BLOCKS_LINE_DETECT_Y)->await();
         Cody::addPathPoint(-500, BLOCKS_LINE_DETECT_Y);
-        moveTask = Cody::detectColorAsync(500);
-        Cody::setX(FIRST_LINE_X + COLOR_Y_OFFSET);
+        moveTask = Cody::detectColorAsync(750);
 
         //millTask->await();
         millTask = Cody::moveMillAsync(90);
 
-        //toolheadTask->await();
+        toolheadTask->await();
         moveTask->await();
         //millTask->await();
 
-        Cody::moveAsync(-300, BLOCKS_LINE_DETECT_Y)->await();
-        Cody::rotateToAsync(-180)->await();
+        Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y);
+        Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y - 150);
+        Cody::followPathAsync(15, false, 25, 25, 15)->await();
 
-        pause();
+        Cody::homeZAsync()->await();
+        Cody::moveZMsAsync(500)->await();
+        Cody::homeZAsync()->await();
+        Cody::moveZMsAsync(500)->await();
 
+        Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y - 150 - BLOCK_DISTANCE_START);
+        Cody::followPathAsync(15, false, 25, 25, 15)->await();
+
+        Cody::homeZAsync()->await();
+        Cody::moveZMsAsync(500)->await();
+        Cody::homeZAsync()->await();
+        Cody::moveZMsAsync(500)->await();
+
+        Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y - 150 - BLOCK_DISTANCE_START * 2);
+        Cody::followPathAsync(15, false, 25, 25, 15)->await();
+
+        Cody::homeZAsync()->await();
+        Cody::moveZMsAsync(500)->await();
+        Cody::homeZAsync()->await();
+        Cody::moveZMsAsync(500)->await();
+
+        
+        /*
         for (int j = *pickedCounts[i]; j < *colorCounts[i]; j++)
         {
-          if (j == 3)
+          if (j == 2 || j == 4)
           {
             toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
             Cody::forwards(BLOCK_DISTANCE_START);
@@ -164,24 +191,27 @@ class Program {
 
           totalPicked++;
           pickedCounts[0][i]++;
-          pick(j % 3, *totalPicked);
+          pick(j % 2, *totalPicked);
 
           if (*totalPicked == 6)
             return;
-        }
+        }*/
       }
     }
 
     static void leaveBatch(int (*pickedCounts)[4], int (*mosaic)[4][3], bool (*positionsLeft)[4][3], int* totalPicked) {
       // Go to mosaic
       Cody::addPathPoint(0, 0);
-      Cody::followPathAsync(50, true);
+      Cody::followPathAsync(35, true)->await();
+      align(ALIGN_DISTANCE, 0);
+      Cody::setXOrientation(ALIGN_SET_X, -90);      
 
+      Cody::addPathPoint(0, 0);
       Cody::addPathPoint(0, 400);
       Cody::addPathPoint(MOSAIC_X, 400);
       Cody::addPathPoint(MOSAIC_X, MOSAIC_Y);
-      Cody::followPathAsync()->await();
-
+      Cody::followPathAsync(35, false)->await();
+/*
       // Color
       for (int i = 3; i >= 0; i--) {
         if (pickedCounts[i] == 0) continue;
@@ -218,7 +248,7 @@ class Program {
             if (*totalPicked == 0) return;
           }
         }
-      }
+      }*/
     }
 
     static void align(double x, double y, int ms = ALIGN_MS, double speed = ALIGN_SPEED, double lookaheadDistance = MOVEMENT_LOOKAHEAD, 

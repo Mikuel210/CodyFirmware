@@ -141,6 +141,16 @@ class SensorDataProvider : public IDataProvider {
       return data;
     }
 
+    SensorData getButtons() override {
+      SensorData data;
+
+      data.xLimit = GPIO::digitalRead(LIMIT_2) == 1;
+      data.zLimit = GPIO::digitalRead(LIMIT_1) == 1;
+      data.button = GPIO::digitalRead(BUTTON) == 1;
+
+      return data;
+    }
+
   private:
     // Encoders
     ESP32Encoder leftEncoder;

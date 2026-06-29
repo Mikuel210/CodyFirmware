@@ -75,11 +75,11 @@ class Fusion {
     }
 
     static void setX(double x) {
-      previousFusionData.position.x = x;
+      previousFusionData.position = Vector3(x, previousFusionData.position.y);
     }
 
     static void setY(double y) {
-      previousFusionData.position.y = y;
+      previousFusionData.position = Vector3(previousFusionData.position.x, y);
     }
 
     static void setOrientation(double orientation) {
