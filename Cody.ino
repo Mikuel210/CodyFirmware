@@ -1,6 +1,6 @@
 // Global parameters
 #undef SIMULATION
-#define DEBUG
+#undef DEBUG
 #define BAUD_RATE 115200
 
 // Debug
@@ -40,11 +40,14 @@ void setup() {
   Cody::initialize(dataProvider, hardwareProvider);
   BMS::initialize();
 
-  plot.Begin();
-  plot.AddXYGraph("Position", 1000, "x", plotX, "y", plotY);
+  #ifdef DEBUG
+    plot.Begin();
+    plot.AddXYGraph("Position", 1000, "x", plotX, "y", plotY);
+  #endif
 
   waitForButton();
   Program::go();
+  //hardwareProvider.moveToolhead({{0, 255}, {0, 255}});
 }
 
 void waitForButton() {
