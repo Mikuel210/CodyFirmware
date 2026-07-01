@@ -268,6 +268,10 @@ class Cody {
       return task;
     }
 
+    static Task* zUpAsync() {
+      return moveZMsAsync(600);
+    }
+
     // Wheels
     static Task* moveWheelsAsync(double z, double speed = 100, double lookaheadDistance = WHEELS_LOOKAHEAD) {
       addWheelsPathPoint(z);

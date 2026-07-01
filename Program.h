@@ -67,7 +67,7 @@ class Program {
       Cody::setXOrientation(ALIGN_SET_X, -90);
 
       toolheadTask->await();
-      toolheadTask = Cody::moveZMsAsync(750);
+      toolheadTask = Cody::zUpAsync();
 
       Cody::addPathPoint(MOSAIC_X, 400);
       Cody::addPathPoint(MOSAIC_X, MOSAIC_Y);
@@ -132,7 +132,7 @@ class Program {
       Cody::setYOrientation(ALIGN_SET_Y, 0);
 
       toolheadTask->await();
-      toolheadTask = Cody::homeZAsync();//Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
+      toolheadTask = Cody::homeZAsync();
       
       Cody::addPathPoint(-25, BLOCKS_LINE_DETECT_Y);
       Cody::addPathPoint(-100, BLOCKS_LINE_DETECT_Y); 
@@ -142,87 +142,73 @@ class Program {
       Cody::setXOrientation(ALIGN_SET_X, -90);
 
       // Pick blocks
-      for (int i = 0; i < 1; i++) {
-        //if (colorCounts[i] == 0 || pickedCounts[i] == colorCounts[i]) continue;
-        // if (i != 0) toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
+      for (int i = 0; i < 4; i++) {
+        if (colorCounts[i] == 0 || pickedCounts[i] == colorCounts[i]) continue;
+        toolheadTask = Cody::zUpAsync();
 
-        //Cody::moveAsync(FIRST_LINE_X + BLOCK_GROUPS_INCREMENT * i + 75, BLOCKS_LINE_DETECT_Y)->await();        
+        // Detect line
+        Cody::moveAsync(FIRST_LINE_X + BLOCK_GROUPS_INCREMENT * i + 140, BLOCKS_LINE_DETECT_Y)->await();
         Cody::addPathPoint(-2000, BLOCKS_LINE_DETECT_Y);
-        Cody::detectColorAsync(850)->await();
-        Cody::setX(FIRST_LINE_X + COLOR_Y_OFFSET);
+        Cody::detectColorAsync(100)->await();
+        Cody::setX(FIRST_LINE_X + COLOR_Y_OFFSET + BLOCK_GROUPS_INCREMENT * i);
 
-        //millTask->await();
-        //millTask = Cody::moveMillAsync(90);
-        //millTask->await();
+        double pickX = FIRST_LINE_X + BLOCK_GROUPS_INCREMENT * i + 25;
+        double pickY = BLOCKS_LINE_DETECT_Y - 155;
 
-        Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y);
-        Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y - 155);
+        // Go to first block
+        Cody::addPathPoint(pickX, BLOCKS_LINE_DETECT_Y);
+        Cody::addPathPoint(pickX, pickY + 75);
+        Cody::followPathAsync(16, false, 20, 25, 15)->await();
+
+        Cody::addPathPoint(pickX, pickY + 200);
+        Cody::followPathAsync(16, true, 20, 25, 15)->await();
+
+        Cody::addPathPoint(pickX, pickY);
         moveTask = Cody::followPathAsync(16, false, 20, 25, 15);
-        toolheadTask = Cody::moveZMsAsync(750);
+        toolheadTask = Cody::zUpAsync();
 
         toolheadTask->await();
         moveTask->await();
-        Cody::rotateToAsync(-180);
-
-        Cody::homeZAsync()->await();
-        Cody::moveZMsAsync(750)->await();
-        Cody::homeZAsync()->await();
-        Cody::moveZMsAsync(750)->await();
-
-        Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y - 155 - BLOCK_DISTANCE_START);
-        Cody::followPathAsync(16, false, 20, 25, 15)->await();
-        Cody::rotateToAsync(-180);
-
-        Cody::homeZAsync()->await();
-        Cody::moveZMsAsync(750)->await();
-        Cody::homeZAsync()->await();
-        Cody::moveZMsAsync(750)->await();
-
-        Cody::addPathPoint(FIRST_LINE_X + 25, BLOCKS_LINE_DETECT_Y - 155 - BLOCK_DISTANCE_START * 2);
-        Cody::followPathAsync(16, false, 20, 25, 15)->await();
-        Cody::rotateToAsync(-180);
-
-        Cody::homeZAsync()->await();
-        Cody::moveZMsAsync(750)->await();
-        Cody::homeZAsync()->await();
-        Cody::moveZMsAsync(750)->await();
-
+        Cody::rotateToAsync(-180)->await();
         
-        /*
-        for (int j = pickedCounts[0][i]; j < colorCounts[0][i]; j++)
+        for (int j = pickedCounts[i]; j < colorCounts[i]; j++)
         {
           if (j == 2 || j == 4)
           {
-            toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_PICK_START_X, TOOLHEAD_UP);
-            Cody::forwards(BLOCK_DISTANCE_START);
-
+            Cody::addPathPoint(pickX, pickY - j / 2 * BLOCK_DISTANCE_START);
             Cody::followPathAsync()->await();
-            //toolheadTask->await();
           }
 
           totalPicked++;
-          pickedCounts[0][i]++;
+          pickedCounts[i]++;
           pick(j % 2, *totalPicked);
 
           if (*totalPicked == 6)
             return;
-        }*/
+        }
+
+        Cody::addPathPoint(pickX, BLOCKS_LINE_DETECT_Y);
+        Cody::addPathPoint(pickX + 75, BLOCKS_LINE_DETECT_Y);
+        Cody::followPathAsync(16, true, 20, 25, 15)->await();
       }
     }
 
     static void leaveBatch(int* pickedCounts, int (*mosaic)[3], bool (*positionsLeft)[3], int* totalPicked) {
       // Go to mosaic
-      Cody::addPathPoint(0, 50);
+      double leaveX = MOSAIC_X + MOSAIC_X_OFFSET;
+      double alignY = Fusion::getData(Cody::dataProvider->getPulses()).position.y;
+
+      Cody::addPathPoint(0, alignY);
       Cody::followPathAsync(35, true)->await();
-      align(ALIGN_DISTANCE, 50);
+      align(ALIGN_DISTANCE, alignY);
       Cody::setXOrientation(ALIGN_SET_X, -90);      
 
-      Cody::addPathPoint(0, 0);
-      Cody::addPathPoint(0, 400);
-      Cody::addPathPoint(MOSAIC_X + MOSAIC_X_OFFSET, 400);
-      Cody::addPathPoint(MOSAIC_X + MOSAIC_X_OFFSET, MOSAIC_Y);
+      Cody::addPathPoint(-25, alignY);
+      Cody::addPathPoint(-25, 400);
+      Cody::addPathPoint(leaveX, 400);
+      Cody::addPathPoint(leaveX, MOSAIC_Y);
       Cody::followPathAsync(35, false)->await();
-/*
+
       // Color
       for (int i = 3; i >= 0; i--) {
         if (pickedCounts[i] == 0) continue;
@@ -238,28 +224,30 @@ class Program {
 
           // Column
           for (int k = 0; k < 3; k++) {
-            if (*mosaic[j][k] != color || *positionsLeft[j][k]) continue;
+            if (mosaic[j][k] != color || positionsLeft[j][k]) continue;
             positions.push_back(k);
           }
 
           if (positions.size() == 0) continue;
 
-          moveTask = Cody::moveAsync(MOSAIC_X, MOSAIC_Y + BLOCK_DISTANCE_MOSAIC * j);
-          toolheadTask = Cody::moveToolheadAsync(TOOLHEAD_LEAVE_START_X + BLOCK_DISTANCE_MOSAIC * positions[0], TOOLHEAD_UP);
+          double targetY = MOSAIC_Y + BLOCK_DISTANCE_MOSAIC * j;
+          bool backwards = Fusion::getData(Cody::dataProvider->getPulses()).position.y > targetY;
+          moveTask = Cody::moveAsync(leaveX, targetY, 40, backwards);
+          toolheadTask = Cody::zUpAsync();//Cody::moveToolheadAsync(TOOLHEAD_LEAVE_START_X + BLOCK_DISTANCE_MOSAIC * positions[0], TOOLHEAD_UP);
 
           moveTask->await();
-          //toolheadTask->await();
+          toolheadTask->await();
 
           for (int k : positions)
           {
             totalPicked--;
             positionsLeft[j][k] = true;
-            pick(k, *totalPicked);
+            leave(k, *totalPicked);
 
             if (*totalPicked == 0) return;
           }
         }
-      }*/
+      }
     }
 
     static void align(double x, double y, int ms = ALIGN_MS, double speed = ALIGN_SPEED, double lookaheadDistance = MOVEMENT_LOOKAHEAD, 
@@ -286,10 +274,13 @@ class Program {
     }
 
     static void pickLeave(double xPosition, double zPosition) {
-      Cody::moveToolheadAsync(xPosition, TOOLHEAD_UP)->await();
-      Cody::moveToolheadAsync(xPosition, TOOLHEAD_DOWN)->await();
-      Cody::moveWheelsAsync(zPosition)->await();
-      Cody::moveToolheadAsync(xPosition, TOOLHEAD_UP)->await();
+      //Cody::moveToolheadAsync(xPosition, TOOLHEAD_UP)->await();
+      //Cody::moveToolheadAsync(xPosition, TOOLHEAD_DOWN)->await();
+      //Cody::moveWheelsAsync(zPosition)->await();
+      //Cody::moveToolheadAsync(xPosition, TOOLHEAD_UP)->await();
+
+      Cody::homeZAsync()->await();
+      Cody::zUpAsync()->await();
     }
 
     static void pause()

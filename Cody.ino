@@ -1,6 +1,6 @@
 // Global parameters
 #undef SIMULATION
-#undef DEBUG
+#define DEBUG
 #define BAUD_RATE 115200
 
 // Debug
@@ -47,7 +47,6 @@ void setup() {
 
   waitForButton();
   Program::go();
-  //hardwareProvider.moveToolhead({{0, 255}, {0, 255}});
 }
 
 void waitForButton() {
