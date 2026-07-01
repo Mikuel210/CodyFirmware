@@ -1,6 +1,6 @@
 // Global parameters
 #undef SIMULATION
-#define DEBUG
+#undef DEBUG
 #define BAUD_RATE 115200
 
 // Debug
