@@ -42,8 +42,6 @@ class Program {
   public:
     static void go() {
       Fusion::restart();
-      //Cody::homeMillAsync()->await();
-
       items();
       cement();
     }
@@ -163,7 +161,6 @@ class Program {
 
       // Pick blue
       Cody::addPathPoint(-10, center);
-
       Cody::moveAsync(-50, center)->await();
       Cody::rotateToAsync(-90)->await();
       
@@ -184,7 +181,7 @@ class Program {
 
       Cody::addPathPoint(-400, 1700);
       Cody::detectColorAsync(250)->await();
-      Cody::setY(-250);
+      Cody::setX(-250 + COLOR_Y_OFFSET);
 
       Cody::rotateToAsync(-180)->await();
       pick(-250);
@@ -195,7 +192,53 @@ class Program {
       Cody::addPathPoint(-500, 900);
       Cody::followPathAsync(40)->await();
 
-      Cody::moveMillMsAsync(750, true)->await();
+      Cody::moveMillMsAsync(800, true)->await();
+      delay(100);
+      Cody::moveMillMsAsync(50)->await();
+
+      // Pick green
+      Cody::addPathPoint(-500, 900);
+      Cody::addPathPoint(-400, 1300);
+      Cody::addPathPoint(-400, 1700);
+      Cody::followPathAsync(40, true);
+
+      Cody::rotateToAsync(-90);
+
+      Cody::addPathPoint(-700, 1700);
+      Cody::detectColorAsync(250)->await();
+      Cody::setX(-500 + COLOR_Y_OFFSET);
+
+      Cody::rotateToAsync(-180)->await();
+      pick(-500);
+
+      // Leave green
+      Cody::moveAsync(-500, 1100)->await();
+
+      Cody::moveMillMsAsync(800, true)->await();
+      delay(100);
+      Cody::moveMillMsAsync(50)->await();
+
+      // Pick yellow
+      Cody::addPathPoint(-500, 1700);
+      Cody::followPathAsync(40, true)->await();
+
+      align(-2000, 1700, 2500);
+      Cody::setXOrientation(-968, 90);
+
+      Cody::moveAsync(-750, 1700)->await();
+      Cody::rotateToAsync(-180)->await();
+      pick(-750);
+
+      // Leave yellow
+      Cody::addPathPoint(-750, 1500);
+      Cody::addPathPoint(0, 1500);
+      Cody::addPathPoint(0, center);
+      Cody::addPathPoint(300, center);
+      Cody::followPathAsync()->await();
+      
+      Cody::moveMillMsAsync(800, true)->await();
+      delay(100);
+      Cody::moveMillMsAsync(50)->await();
     }
 
     static void pick(double x) {
