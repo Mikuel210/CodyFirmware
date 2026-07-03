@@ -59,6 +59,29 @@ class Cody {
       hardwareProvider = &hardwareProvider_;
     }
 
+    // Mill
+    static Task* homeMillAsync() {
+      Task* task = new Task("homeMill", homeMillTask);
+      TaskArgs* args = new TaskArgs();
+      args->task = task;
+      
+      task->start(args);
+      return task;
+    }
+
+    static Task* moveMillMsAsync(double ms, bool forwards = true, double speed = 100.0) {
+      Task* task = new Task("moveMillMs", moveMillMsTask);
+      MoveMillMsArgs* args = new MoveMillMsArgs();
+
+      args->task = task;
+      args->ms = ms;
+      args->forwards = forwards;
+      args->speed = speed / 100.0;
+      
+      task->start(args);
+      return task;
+    }
+
     // Drive
     static Task* moveAsync(double x, double y, double speed = 40, bool backwards = false, double lookaheadDistance = MOVEMENT_LOOKAHEAD, 
       double transitionDistance = TRANSITION_LOOKAHEAD, double decelerationMm = MOVEMENT_DECELERATION_MM) {
@@ -533,6 +556,48 @@ class Cody {
         hardwareProvider->moveToolhead({{false, 0}, {args->forwards, pwm}});
 
         if ((msStart - msVeryStart) >= args->ms) break;
+        vTaskDelay(max(1000.0 / HZ - (millis() - msStart), 0.0));
+      }
+
+      hardwareProvider->moveToolhead({{false, 0}, {false, 0}});
+      args->task->stop();
+      delete args;
+    }
+
+    // Mill
+    static void homeMillTask(void* task) {
+      TaskArgs* args = (TaskArgs*)task;
+
+      while (true) {
+        unsigned long msStart = millis();
+
+        SensorData sensorData = dataProvider->getButtons();
+        if (sensorData.xLimit) break;
+
+        hardwareProvider->moveToolhead({{true, 175}, {false, 0}});
+      }
+
+      hardwareProvider->moveToolhead({{false, 0}, {false, 0}});
+      args->task->stop();
+      delete args;
+    }
+
+    struct MoveMillMsArgs : TaskArgs {
+      double ms;
+      bool forwards;
+      double speed;
+    };
+
+    static void moveMillMsTask(void* task) {
+      MoveMillMsArgs* args = (MoveMillMsArgs*)task;
+      unsigned long msStart = millis();
+
+      while (true) {
+        unsigned long msLoop = millis();
+
+        if ((msLoop - msStart) >= args->ms) break;
+        hardwareProvider->moveToolhead({{args->forwards, args->speed * 255.0}, {false, 0}});
+
         vTaskDelay(max(1000.0 / HZ - (millis() - msStart), 0.0));
       }
 
