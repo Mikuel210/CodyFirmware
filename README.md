@@ -6,7 +6,7 @@
 
 ## About
 
-The World Robot Olympiad (WRO) is a global robotics competition. For the Robomission challenge, you have to design, build and program a robot to complete a set of challenges on a board in under 2 minutes. Cody is our robot for this year, and this project is the firmware that makes it all work.
+The World Robot Olympiad (WRO) is a global robotics competition. For the Robomission challenge, you have to design, build and program a robot to complete a set of challenges on a board in under 2 minutes. Cody is our robot for this year, and this project is the firmware that makes it all work. It controls the flow from sensor data to hardware outputs in order to make the robot follow a set of instructions and complete the missions on the board.
 
 ## Main features
 
@@ -55,8 +55,9 @@ Almost all of the code was written by me, except for:
 
 No AI was used to write this README.
 
----
+> [!NOTE]
+> I didn't submit this project to any other YSWS. It might appear like so because I started working on the `Cody` Hackatime project, which I previously used for submitting the robot itself to Blueprint. Early commit history for the firmware is on the main [Cody](https://github.com/Mikuel210/Cody) repo too.
 
-> Note: Early commit history for the firmware is in the [Cody](https://github.com/Mikuel210/Cody) repo
+---
 
 Made with ❤️ for [Horizons](horizons.hackclub.com) thanks to [Hack Club](https://hackclub.com)
