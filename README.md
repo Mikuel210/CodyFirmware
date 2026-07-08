@@ -1,8 +1,12 @@
 # Cody Firmware
 
-[Cody](https://github.com/Mikuel210/Cody) is my robot for WRO RoboMission Senior. This project is the firmware that makes it work.
+**[Cody](https://github.com/Mikuel210/Cody) is my robot for WRO RoboMission Senior. This project is the firmware that makes it work.**
 
 ![Cody](img/cody.jpg)
+
+## About
+
+The World Robot Olympiad (WRO) is a global robotics competition. For the Robomission challenge, you have to design, build and program a robot to complete a set of challenges on a board in under 2 minutes. Cody is our robot for this year, and this project is the firmware that makes it all work.
 
 ## Main features
 
@@ -42,8 +46,17 @@ flowchart TD
 
 https://youtu.be/BER6AlDMYd0
 
+## About AI usage
+
+Almost all of the code was written by me, except for:
+
+- The library for using the TCS34725 color sensor is vibecoded, as it was a cheap AliExpress clone and it didn't work with any of the existing libraries. It isn't in the repo nor did I track it with Hackatime, but it's required for the robot to work properly.
+- I used AI to help me write the `Pursuit::findLookaheadTime` and `Fusion::rgbToColor` functions.
+
+No AI was used to write this README.
+
 ---
 
-> Note: Some of the commit history for the firmware is in the [Cody](https://github.com/Mikuel210/Cody) repo
+> Note: Early commit history for the firmware is in the [Cody](https://github.com/Mikuel210/Cody) repo
 
 Made with ❤️ for [Horizons](horizons.hackclub.com) thanks to [Hack Club](https://hackclub.com)
