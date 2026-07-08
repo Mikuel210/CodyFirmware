@@ -50,7 +50,7 @@ https://youtu.be/BER6AlDMYd0
 
 Almost all of the code was written by me, except for:
 
-- The library for using the TCS34725 color sensor is vibecoded, as it was a cheap AliExpress clone and it didn't work with any of the existing libraries. It isn't in the repo nor did I track it with Hackatime, but it's required for the robot to work properly.
+- [The library for using the TCS34725 color sensor](https://github.com/Mikuel210/TCS_Clone) is vibecoded, as it was a cheap AliExpress clone and it didn't work with any of the existing libraries. It isn't in the repo nor did I track it with Hackatime, but it's required for the robot to work properly.
 - I used AI to help me write the `Pursuit::findLookaheadTime` and `Fusion::rgbToColor` functions.
 
 No AI was used to write this README.
