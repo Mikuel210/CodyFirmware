@@ -2,19 +2,21 @@
 
 [Cody](https://github.com/Mikuel210/Cody) is my robot for WRO RoboMission Senior. This project is the firmware that makes it all work.
 
-TODO image
+![Cody](img/cody.jpg)
 
-## Features
+## Main Features
 
-- **Odometry:** 
-- Simulation
+- **Odometry:** The robot uses the encoders of its wheels in order to constantly update its estimation of its position and orientation, as well as the position of its other motors and attachments.
+- **Pure Pursuit:** The robot uses a Pure Pursuit algorithm that allows you to program the robot by defining paths through a set of points. Instead of stopping on each turn like our previous robots did, this algorithm allows the robot to follow paths smoothly.
+- **Simulation:** Data and hardware providers are modules you can swap. You can use this capability to accurately test the robot in a simulation. I made a [Unity simulation](https://github.com/Mikuel210/CodySimulation) for this purpose and it allowed us to test the code before the robot was fully built.
 
-## How it works
+## How it Works
 
 1. The robot gets data from its sensors
-2. The robot fuses the data to estimate its position and orientation (this is called **odometry**)
-3. The robot uses a **Pure Pursuit** algorithm to follow a path and constantly update its navigation target
-4. The navigation output is passed into the hardware provider to move the motors, closing the loop
+2. The robot fuses the data to estimate its position and orientation
+3. The robot uses a Pure Pursuit algorithm to update its navigation target in order to follow a path
+4. Navigation generates the signals to be sent to the motors in order to reach the target
+5. The navigation output is passed into the hardware provider to move the motors, closing the loop
 
 ## Control Loop
 
@@ -38,4 +40,13 @@ flowchart TD
 
 ## Demo Video
 
-![Demo Video](img/demo.mp4)
+https://youtu.be/BER6AlDMYd0
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/BER6AlDMYd0?si=R_Xz9DHcWPN9ZipF" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+---
+
+> ![NOTE]
+> Some of the commit history for the firmware is in the [Cody](https://github.com/Mikuel210/Cody) repo
+
+Made with ❤️ for [Horizons](horizons.hackclub.com) thanks to [Hack Club](https://hackclub.com)
