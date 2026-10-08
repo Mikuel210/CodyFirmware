@@ -50,7 +50,9 @@ https://youtu.be/BER6AlDMYd0
 
 1. Install the [Arduino CLI](https://docs.arduino.cc/arduino-cli/installation)
 2. Clone the repository
-3. Inside the `Cody` directory, run `arduino-cli compile --fqbn esp32:esp32:esp32`
+3. Add ESP32 build platform: `arduino-cli core install esp32:esp32`
+4. Copy everything under `libraries` to your Arduino libraries directory (usually `~/Arduino/libraries`)
+5. Inside the `Cody` directory, run `arduino-cli compile --fqbn esp32:esp32:esp32`
 
 ## About AI usage
 
