@@ -46,6 +46,12 @@ flowchart TD
 
 https://youtu.be/BER6AlDMYd0
 
+## Build instructions
+
+1. Install the [Arduino CLI](https://docs.arduino.cc/arduino-cli/installation)
+2. Clone the repository
+3. Inside the `Cody` directory, run `arduino-cli compile --fqbn esp32:esp32:esp32`
+
 ## About AI usage
 
 Almost all of the code was written by me, except for:
